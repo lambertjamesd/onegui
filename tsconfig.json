@@ -1,6 +1,16 @@
 {
     "compilerOptions": {
         "strict": true,
-        "lib": ["ESNext"]
-    }
+        "lib": ["ES2020", "DOM"],
+        "outDir": "dist",
+        "target": "ES5",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "typeRoots": [
+            "./node_modules/@types",
+            "./@types",
+        ],
+    },
 }

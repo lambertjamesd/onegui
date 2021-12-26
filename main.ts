@@ -1,5 +1,6 @@
 
 import * as NS from 'node-sdl2';
+import { HelloWorld } from './wasm_tests/loader';
 
 let win = new NS.window;
 
@@ -18,3 +19,5 @@ const draw = () => {
 setTimeout(() => {
     
 }, 1000);
+
+HelloWorld();

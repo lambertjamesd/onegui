@@ -3,6 +3,10 @@
 
 OneGUI aims to be a file format for creating consistent, flexible, and portable GUIs. Use the same tool to create your GUIs for any platform and any language with consistent results across each supported platform.
 
+## Motivation 
+
+I've been fairly unsatisfied with GUIs in programming. HTML is overly complicated and relies heavily on coding UIs which are visual in nature. XCode's Interface Builder has a nice WYSIWYG editor but is tightly coupled to a specific coding environment. I want a simple yet powerful GUI framework that is usable almost anywhere. 
+
 ## OneGUI for programmers
 
 OneGUI will be decoupled from any specific platform or language and will try to stay as simple as possible. A OneGUI component will have its own internal state. The internal state will control the presentation of the GUI such as information to display on the GUI or instantiating nested components. The state can be controlled by assigning JSON like data to keys. 
@@ -33,7 +37,10 @@ oneGui.loadTemplate('./app.onegui');
 // - instantiate the template.
 // - templates are stored by `namespace:name` when loaded 
 //   and referenced by that name when instantiated
-oneGui.instantiate('example:app', appCallback, initialState);
+const appUi = oneGui.instantiate('example:app', appCallback, initialState);
+
+// create a window to display the UI
+oneGui.createWindow(appUi);
 
 ```
 

@@ -3,57 +3,68 @@
 
 #include <stddef.h>
 
-typedef unsigned int GCRef;
-
 #define ARRAY_SIZE_VARIABLE 0
 
 enum DataTypeType {
     DataTypeNull,
     
-    DataTypeInt,
-    DataTypeUInt,
-    DataTypeFloat,
+    DataTypeInt8,
+    DataTypeUInt8,
+    DataTypeInt16,
+    DataTypeUInt16,
+    DataTypeInt32,
+    DataTypeUInt32,
+    DataTypeInt64,
+    DataTypeUInt64,
+    DataTypeFloat32,
+    DataTypeFloat64,
 
+    DataTypePrimitiveCount,
+    
+    // same as pointer but not reference counted
+    DataTypeWeakPointer = DataTypePrimitiveCount,
+    // Ref counted
     DataTypePointer,
-    DataTypeArray,
+
+    DataTypeFixedArray,
+    DataTypeVariableArray,
     DataTypeObject,
+
+    // Used to allow pointers to 
+    // point to an unknown type
+    DataTypeUnknown,
+
+    DataTypeString,
 
     DataTypeFunction,
 
+    // TODO, potentially replace with a byte array
     DataTypeOpaque,
-
-    // references a DataType
-    DataTypeDataType,
-    
-    DataTypeGCRef,
 };
 
-struct DataSubType;
+typedef char* OString;
 
 struct DataType {
     enum DataTypeType type;
-    // The number of elements for type
-    // DataTypeObject
-    // 0 for variable sized arrays
-    // a positive value for fixed size arrays
-    // specifys the size of integer or float in bytes for number types
-    unsigned int size;
-    union {
-        GCRef arrayType;
-        GCRef pointerType;
-        GCRef objectSubTypes;
-    };
 };
 
-struct DataSubType {
-    char* name;
-    struct DataType type;
-    unsigned offset;
+struct PrimitiveDataType {
+    enum DataTypeType type;
 };
 
-struct AnyObjectReference {
-    struct DataType* dataType;
-    void* data;
+struct StringDataType {
+    enum DataTypeType type;
+};
+
+struct FixedArrayDataType {
+    enum DataTypeType type;
+    struct DataType* subType;
+    unsigned int elementCount;
+};
+
+struct VariableArrayDataType {
+    enum DataTypeType type;
+    struct DataType* subType;
 };
 
 struct DynamicArrayHeader {
@@ -64,6 +75,30 @@ struct DynamicArrayHeader {
 struct DynamicArray {
     struct DynamicArrayHeader header;
     char* data[];
+};
+
+struct PointerDataType {
+    enum DataTypeType type;
+    struct DataType* subType;
+};
+
+struct ObjectSubTypeArray;
+
+struct ObjectDataType {
+    enum DataTypeType type;
+    size_t byteSize;
+    struct ObjectSubTypeArray* objectSubTypes;
+};
+
+struct ObjectSubType {
+    OString name;
+    struct DataType* type;
+    unsigned offset;
+};
+
+struct ObjectSubTypeArray {
+    struct DynamicArrayHeader header;
+    struct ObjectSubType elements[];
 };
 
 size_t dataTypeSize(struct DataType* type);

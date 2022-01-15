@@ -3,10 +3,10 @@
 
 #include "../types/types.h"
 
-void* ref_malloc(struct DataType* dataType);
-struct DynamicArray* ref_malloc_array(struct VariableArrayDataType* dataType, unsigned capacity);
-OString ref_malloc_str(struct StringDataType* dataType, unsigned byteLength, char* dataSource);
-void ref_retain(void* obj);
-void ref_release(void* obj);
+void* refMalloc(struct DataType* dataType);
+struct DynamicArray* refMallocArray(struct VariableArrayDataType* dataType, unsigned capacity);
+OString refMallocString(struct StringDataType* dataType, unsigned byteLength, char* dataSource);
+void refRetain(void* obj);
+void refRelease(void* obj);
 
 #endif

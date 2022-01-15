@@ -3,8 +3,7 @@
 
 #include "ref.h"
 
-void* _ref_malloc_raw(size_t size);
-struct DynamicArray* _ref_malloca_array_raw(size_t elementSize, unsigned capacity);
-void* _ref_change_type(void* obj, struct DataType* dataType);
+void* _refMallocRaw(size_t size);
+void* _refChangeType(void* obj, struct DataType* dataType);
 
 #endif

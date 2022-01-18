@@ -5,11 +5,15 @@
 int gTestsRun;
 int gTestsFailed;
 char* gTestFailReason;
+char* gTestFailFile;
+int gTestFailLine;
 jmp_buf* gTestJumpTarget;
 
-void testAssert(bool assertion, char* assertionAsText) {
+void testAssert(bool assertion, char* assertionAsText, char* file, int line) {
     if (!assertion) {
         gTestFailReason = assertionAsText;
+        gTestFailFile = file;
+        gTestFailLine = line;
         longjmp(*gTestJumpTarget, 1);
     }
 }
@@ -22,7 +26,7 @@ void testRun(TestCallbak callback, char* testName) {
 
     if (setjmp(jumpBuffer) != 0) {
         ++gTestsFailed;
-        printf("Failed %s: Reason %s\n", testName, gTestFailReason);
+        printf("%s:%d: Failed %s\n    Reason %s\n", gTestFailFile, gTestFailLine, testName, gTestFailReason);
         return;
     }
 
@@ -34,8 +38,6 @@ void testRun(TestCallbak callback, char* testName) {
 }
 
 int testRunSummary() {
-    printf("Tests run %d\n", gTestsRun);
-    printf("Tests passed %d\n", gTestsFailed - gTestsRun);
-
+    printf("Tests run %d passed %d\n", gTestsRun, gTestsRun - gTestsFailed);
     return gTestsFailed != 0;
 }

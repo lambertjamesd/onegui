@@ -36,7 +36,7 @@ size_t dataTypeSize(struct DataType* type) {
             struct ObjectDataType* asObjectType = (struct ObjectDataType*)type;
             return asObjectType->byteSize;
         }
+        default:
+            return 0;
     }
-
-    return 0;
 }

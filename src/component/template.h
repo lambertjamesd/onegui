@@ -17,7 +17,8 @@ struct ComponentTemplate {
     InitComponent initCallback;
     LayoutComponent layoutCallback;
     enum ComponentTemplateFlags flags;
-    struct AnyObjectReference internalState;
+    void* internalState;
+    struct DataType* internalStateType;
     struct Module* forModule;
 };
 

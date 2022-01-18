@@ -4,7 +4,7 @@
 #include "../types/types.h"
 
 struct Module {
-    struct AnyObjectReference internalState;
+    void* internalState;
 };
 
 #endif

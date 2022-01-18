@@ -4,6 +4,6 @@
 #include "ref.h"
 
 void* _refMallocRaw(size_t size);
-void* _refChangeType(void* obj, struct DataType* dataType);
+void _refChangeType(void* obj, struct DataType* dataType);
 
 #endif

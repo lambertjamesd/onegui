@@ -1,6 +1,7 @@
 #include "ref.h"
 
 #include <memory.h>
+#include <malloc.h>
 #include <stdbool.h>
 
 struct RefHeader {
@@ -25,7 +26,7 @@ void* _refMallocRaw(size_t size) {
     return result + 1;
 }
 
-void* _refChangeType(void* obj, struct DataType* dataType) {
+void _refChangeType(void* obj, struct DataType* dataType) {
     if (!obj) {
         return;
     }
@@ -57,7 +58,7 @@ struct DynamicArray* refMallocArray(struct VariableArrayDataType* dataType, unsi
     memset(result, 0, allocationSize);
 
     result->refCount = 1;
-    result->dataType = dataType;
+    result->dataType = (struct DataType*)dataType;
     refRetain(dataType);
 
     struct DynamicArrayHeader* header = (struct DynamicArrayHeader*)(result + 1); 
@@ -123,9 +124,9 @@ void refReleaseArray(void* firstElement, struct DataType* subType, unsigned coun
 void refReleaseObject(void* firstElement, struct ObjectDataType* objectType) {
     char* structStart = firstElement;
 
-    struct ObjectSubType* end = objectType->objectSubTypes + objectType->objectSubTypes->header.count;
-    for (struct ObjectSubType* curr = objectType->objectSubTypes->elements; curr < end; ++curr) {
-        refReleaseChildren(structStart + curr->offset, &curr->type);
+    struct ObjectSubType* end = &objectType->objectSubTypes->elements[0] + objectType->objectSubTypes->header.count;
+    for (struct ObjectSubType* curr = &objectType->objectSubTypes->elements[0]; curr < end; ++curr) {
+        refReleaseChildren(structStart + curr->offset, curr->type);
     }
 }
 
@@ -139,12 +140,15 @@ void refReleaseChildren(void* obj, struct DataType* dataType) {
             break;
         case DataTypeVariableArray:
             {
-                struct DynamicArray* arr = (struct DynamicArrayHeader*)obj;
+                struct DynamicArray* arr = (struct DynamicArray*)obj;
                 refReleaseArray(&arr->data, ((struct VariableArrayDataType*)dataType)->subType, arr->header.count);
             }
             break;
         case DataTypeObject:
             refReleaseObject(obj, (struct ObjectDataType*)dataType);
+            break;
+        default:
+            // do nothing for all other types
             break;
     }
 }

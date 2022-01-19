@@ -37,6 +37,24 @@ void _refChangeType(void* obj, struct DataType* dataType) {
     refRetain(dataType);
 }
 
+struct DataType* refGetDataType(void* obj) {
+    if (!obj) {
+        return 0;
+    }
+
+    struct RefHeader* header = (struct RefHeader*)obj - 1;
+    return header->dataType;
+}
+
+int _refGetCount(void* obj) {
+    if (!obj) {
+        return 0;
+    }
+
+    struct RefHeader* header = (struct RefHeader*)obj - 1;
+    return header->refCount;
+}
+
 void* refMalloc(struct DataType* dataType) {
     unsigned allocationSize = dataTypeSize(dataType) + sizeof(struct RefHeader);
     struct RefHeader* result = malloc(allocationSize);
@@ -70,10 +88,25 @@ struct DynamicArray* refMallocArray(struct VariableArrayDataType* dataType, unsi
 }
 
 OString refMallocString(struct StringDataType* dataType, unsigned byteLength, char* dataSource) {
-    // TODO support strings longer than 255 bytes
-    OString result = malloc(byteLength + 1);
-    result[0] = byteLength;
-    memcpy(result + 1, dataSource, byteLength);
+    int prefixLength = 1;
+    int lenData = byteLength;
+
+    while (lenData > 0x7f) {
+        ++prefixLength;
+        lenData >>= 7;
+    }
+
+    OString result = malloc(byteLength + prefixLength);
+
+    int lengthIndex = 0;
+    lenData = byteLength;
+
+    while (lengthIndex < prefixLength) {
+        result[lengthIndex] = 0x7f & (byteLength >> (7 * (prefixLength - lengthIndex - 1)));
+        ++lengthIndex;
+    }
+
+    memcpy(result + prefixLength, dataSource, byteLength);
     return result;
 }
 
@@ -131,6 +164,10 @@ void refReleaseObject(void* firstElement, struct ObjectDataType* objectType) {
 }
 
 void refReleaseChildren(void* obj, struct DataType* dataType) {
+    if (!dataType) {
+        return;
+    }
+
     switch (dataType->type) {
         case DataTypePointer:
             refRelease(*((void**)obj));

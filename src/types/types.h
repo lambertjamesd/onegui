@@ -2,6 +2,7 @@
 #define __ONEGUI_TYPES_H__
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define ARRAY_SIZE_VARIABLE 0
 
@@ -45,25 +46,25 @@ enum DataTypeType {
 typedef char* OString;
 
 struct DataType {
-    enum DataTypeType type;
+    uint32_t type;
 };
 
 struct PrimitiveDataType {
-    enum DataTypeType type;
+    uint32_t type;
 };
 
 struct StringDataType {
-    enum DataTypeType type;
+    uint32_t type;
 };
 
 struct FixedArrayDataType {
-    enum DataTypeType type;
+    uint32_t type;
     struct DataType* subType;
     unsigned int elementCount;
 };
 
 struct VariableArrayDataType {
-    enum DataTypeType type;
+    uint32_t type;
     struct DataType* subType;
 };
 
@@ -78,15 +79,15 @@ struct DynamicArray {
 };
 
 struct PointerDataType {
-    enum DataTypeType type;
+    uint32_t type;
     struct DataType* subType;
 };
 
 struct ObjectSubTypeArray;
 
 struct ObjectDataType {
-    enum DataTypeType type;
-    size_t byteSize;
+    uint32_t type;
+    uint32_t byteSize;
     struct ObjectSubTypeArray* objectSubTypes;
 };
 

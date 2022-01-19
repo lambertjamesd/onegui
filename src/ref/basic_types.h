@@ -13,12 +13,13 @@ struct BasicDataTypes {
     struct ObjectDataType* pointerDataType;
     struct StringDataType* stringDataType;
     struct DataType* unknownType;
-    struct PointerDataType* pointerToUnknownType;
+    struct PointerDataType* weakPointerToUnknownType;
     struct ObjectDataType* variableArrayDataType;
     struct ObjectDataType* fixedArrayDataType;
 };
 
 void basicTypesInit(struct BasicDataTypes* into);
+void basicTypesDestroy(struct BasicDataTypes* basicTypes);
 
 struct DataType* basicTypesGetPrimitive(struct BasicDataTypes* basicTypes, enum DataTypeType type);
 struct ObjectDataType* basicTypesNewObject(struct BasicDataTypes* basicTypes, size_t size, unsigned elementCount);

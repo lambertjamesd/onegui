@@ -8,5 +8,6 @@ struct DynamicArray* refMallocArray(struct VariableArrayDataType* dataType, unsi
 OString refMallocString(struct StringDataType* dataType, unsigned byteLength, char* dataSource);
 void refRetain(void* obj);
 void refRelease(void* obj);
+struct DataType* refGetDataType(void* obj);
 
 #endif

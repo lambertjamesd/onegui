@@ -18,7 +18,12 @@ void basicTypesInit(struct BasicDataTypes* into) {
     into->objectSubTypeArray->type = DataTypeVariableArray;
     into->objectSubTypeArray->subType = (struct DataType*)into->objectSubType;
     refRetain(into->objectSubType);
-    
+
+    into->pointerToObjectSubTypeArray = _refMallocRaw(sizeof(struct PointerDataType));
+    into->pointerToObjectSubTypeArray->type = DataTypePointer;
+    into->pointerToObjectSubTypeArray->subType = (struct DataType*)into->objectSubTypeArray;
+    refRetain(into->pointerToObjectSubTypeArray->subType);
+
     // ref type for struct ObjectSubType
     into->objectDataType = _refMallocRaw(sizeof(struct ObjectDataType));
     into->objectDataType->type = DataTypeObject;
@@ -48,6 +53,7 @@ void basicTypesInit(struct BasicDataTypes* into) {
     into->pointerToUnknownType = basicTypesNewPointerType(into, into->unknownType);
     basicTypesAppendSubType(into, into->pointerDataType, "type", into->primitiveTypes[DataTypeUInt32], 0);
     basicTypesAppendSubType(into, into->pointerDataType, "subType", (struct DataType*)into->pointerToUnknownType, offsetof(struct PointerDataType, subType));
+    _refChangeType(into->pointerToObjectSubTypeArray, (struct DataType*)into->pointerDataType);
 
     into->variableArrayDataType = basicTypesNewObject(into, sizeof(struct VariableArrayDataType), 2);
     basicTypesAppendSubType(into, into->variableArrayDataType, "type", into->primitiveTypes[DataTypeUInt32], 0);
@@ -72,7 +78,7 @@ void basicTypesInit(struct BasicDataTypes* into) {
     into->objectDataType->objectSubTypes = (struct ObjectSubTypeArray*)refMallocArray(into->objectSubTypeArray, 3);
     basicTypesAppendSubType(into, into->objectDataType, "type", into->primitiveTypes[DataTypeUInt32], 0);
     basicTypesAppendSubType(into, into->objectDataType, "byteSize", into->primitiveTypes[DataTypeUInt32], offsetof(struct ObjectDataType, byteSize));
-    basicTypesAppendSubType(into, into->objectDataType, "objectSubTypes", (struct DataType*)into->objectSubTypeArray, offsetof(struct ObjectDataType, objectSubTypes));
+    basicTypesAppendSubType(into, into->objectDataType, "objectSubTypes", (struct DataType*)into->pointerToObjectSubTypeArray, offsetof(struct ObjectDataType, objectSubTypes));
 
     _refChangeType(into->stringDataType, (struct DataType*)into->primitiveDataType);
 }
@@ -98,20 +104,31 @@ void basicTypesDestroy(struct BasicDataTypes* basicTypes) {
 
     _basicTypesDestroyObjectDataType(basicTypes->objectDataType);
     _basicTypesDestroyObjectDataType(basicTypes->objectSubType);
+
     _refChangeType(basicTypes->objectSubTypeArray, NULL);
     refRelease(basicTypes->objectSubTypeArray->subType);
     basicTypes->objectSubTypeArray->subType = NULL;
     refRelease(basicTypes->objectSubTypeArray);
+
+    _refChangeType(basicTypes->pointerToObjectSubTypeArray, NULL);
+    refRelease(basicTypes->pointerToObjectSubTypeArray->subType);
+    basicTypes->pointerToObjectSubTypeArray->subType = NULL;
+    refRelease(basicTypes->pointerToObjectSubTypeArray);
+
     _basicTypesDestroyObjectDataType(basicTypes->primitiveDataType);
     _basicTypesDestroyObjectDataType(basicTypes->pointerDataType);
+
     _refChangeType(basicTypes->stringDataType, NULL);
     refRelease(basicTypes->stringDataType);
+
     _refChangeType(basicTypes->unknownType, NULL);
     refRelease(basicTypes->unknownType);
+
     _refChangeType(basicTypes->pointerToUnknownType, NULL);
     refRelease(basicTypes->pointerToUnknownType->subType);
     basicTypes->pointerToUnknownType->subType = NULL;
     refRelease(basicTypes->pointerToUnknownType);
+
     _basicTypesDestroyObjectDataType(basicTypes->variableArrayDataType);
     _basicTypesDestroyObjectDataType(basicTypes->fixedArrayDataType);
 }

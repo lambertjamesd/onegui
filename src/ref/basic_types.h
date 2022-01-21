@@ -9,6 +9,7 @@ struct BasicDataTypes {
     struct ObjectDataType* objectDataType;
     struct ObjectDataType* objectSubType;
     struct VariableArrayDataType* objectSubTypeArray;
+    struct PointerDataType* pointerToObjectSubTypeArray;
     struct ObjectDataType* primitiveDataType;
     struct ObjectDataType* pointerDataType;
     struct StringDataType* stringDataType;

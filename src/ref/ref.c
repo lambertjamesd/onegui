@@ -168,7 +168,23 @@ void refReleaseObject(void* firstElement, struct ObjectDataType* objectType) {
 
     struct ObjectSubType* end = &objectType->objectSubTypes->elements[0] + objectType->objectSubTypes->header.count;
     for (struct ObjectSubType* curr = &objectType->objectSubTypes->elements[0]; curr < end; ++curr) {
-        refReleaseChildren(structStart + curr->offset, curr->type);
+        if (!curr->type) {
+            continue;
+        }
+
+        switch (curr->type->type) {
+            case DataTypePointer:
+            case DataTypeString:
+                refRelease(*((void**)(structStart + curr->offset)));
+                break;
+            case DataTypeFixedArray:
+            case DataTypeVariableArray:
+            case DataTypeObject:
+                refReleaseChildren(structStart + curr->offset, curr->type);
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -178,9 +194,6 @@ void refReleaseChildren(void* obj, struct DataType* dataType) {
     }
 
     switch (dataType->type) {
-        case DataTypePointer:
-            refRelease(*((void**)obj));
-            break;
         case DataTypeFixedArray:
             refReleaseArray(obj, ((struct FixedArrayDataType*)dataType)->subType, ((struct FixedArrayDataType*)dataType)->elementCount);
             break;

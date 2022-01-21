@@ -26,7 +26,7 @@ void testBasicTypes() {
     TEST_ASSERT(basicTypes.objectDataType->objectSubTypes->elements[1].type == basicTypes.primitiveTypes[DataTypeUInt32]);
     TEST_ASSERT(ostrEqualCStr(basicTypes.objectDataType->objectSubTypes->elements[1].name, "byteSize"));
     TEST_ASSERT(basicTypes.objectDataType->objectSubTypes->elements[2].offset == 8);
-    TEST_ASSERT(basicTypes.objectDataType->objectSubTypes->elements[2].type == (struct DataType*)basicTypes.objectSubTypeArray);
+    TEST_ASSERT(basicTypes.objectDataType->objectSubTypes->elements[2].type == (struct DataType*)basicTypes.pointerToObjectSubTypeArray);
     TEST_ASSERT(ostrEqualCStr(basicTypes.objectDataType->objectSubTypes->elements[2].name, "objectSubTypes"));
 
     TEST_ASSERT(refGetDataType(basicTypes.objectSubType) == (struct DataType*)basicTypes.objectDataType);
@@ -45,6 +45,10 @@ void testBasicTypes() {
     TEST_ASSERT(refGetDataType(basicTypes.objectSubTypeArray) == (struct DataType*)basicTypes.variableArrayDataType);
     TEST_ASSERT(basicTypes.objectSubTypeArray->type == DataTypeVariableArray);
     TEST_ASSERT(basicTypes.objectSubTypeArray->subType == (struct DataType*)basicTypes.objectSubType);
+
+    TEST_ASSERT(refGetDataType(basicTypes.pointerToObjectSubTypeArray) == (struct DataType*)basicTypes.pointerDataType);
+    TEST_ASSERT(basicTypes.pointerToObjectSubTypeArray->type == DataTypePointer);
+    TEST_ASSERT(basicTypes.pointerToObjectSubTypeArray->subType == (struct DataType*)basicTypes.objectSubTypeArray);
 
     TEST_ASSERT(refGetDataType(basicTypes.primitiveDataType) == (struct DataType*)basicTypes.objectDataType);   
     TEST_ASSERT(basicTypes.primitiveDataType->type == DataTypeObject);
@@ -107,6 +111,7 @@ void testBasicTypes() {
     refRetain(basicTypes.objectDataType);
     refRetain(basicTypes.objectSubType);
     refRetain(basicTypes.objectSubTypeArray);
+    refRetain(basicTypes.pointerToObjectSubTypeArray);
     refRetain(basicTypes.primitiveDataType);
     refRetain(basicTypes.pointerDataType);
     refRetain(basicTypes.stringDataType);
@@ -128,6 +133,8 @@ void testBasicTypes() {
     refRelease(basicTypes.objectSubType);
     TEST_ASSERT(_refGetCount(basicTypes.objectSubTypeArray) == 1);
     refRelease(basicTypes.objectSubTypeArray);
+    TEST_ASSERT(_refGetCount(basicTypes.pointerToObjectSubTypeArray) == 1);
+    refRelease(basicTypes.pointerToObjectSubTypeArray);
     TEST_ASSERT(_refGetCount(basicTypes.primitiveDataType) == 1);
     refRelease(basicTypes.primitiveDataType);
     TEST_ASSERT(_refGetCount(basicTypes.pointerDataType) == 1);
@@ -142,4 +149,42 @@ void testBasicTypes() {
     refRelease(basicTypes.variableArrayDataType);
     TEST_ASSERT(_refGetCount(basicTypes.fixedArrayDataType) == 1);
     refRelease(basicTypes.fixedArrayDataType);
+}
+
+struct TestStructure {
+    void* pointer;
+    OString string;
+};
+
+void basicTypesObjectType() {
+    struct BasicDataTypes basicTypes;
+    basicTypesInit(&basicTypes);
+
+    struct ObjectDataType* objectType = basicTypesNewObject(&basicTypes, sizeof(void*) * 2, 2);
+    basicTypesAppendSubType(&basicTypes, objectType, "pointer", (struct DataType*)basicTypes.pointerToUnknownType, 0);
+    basicTypesAppendSubType(&basicTypes, objectType, "string", (struct DataType*)basicTypes.stringDataType, sizeof(void*));
+
+    void* pointerValue = refMalloc((struct DataType*)objectType);
+    char* stringValue = refMallocString(basicTypes.stringDataType, 4, "test");
+
+    struct TestStructure* test = refMalloc((struct DataType*)objectType);
+    test->pointer = pointerValue;
+    refRetain(pointerValue);
+    test->string = stringValue;
+    refRetain(stringValue);
+
+    TEST_ASSERT(_refGetCount(pointerValue) == 2);
+    TEST_ASSERT(_refGetCount(stringValue) == 2);
+
+    refRelease(test);
+
+    // should automatically release any references
+    TEST_ASSERT(_refGetCount(pointerValue) == 1);
+    TEST_ASSERT(_refGetCount(stringValue) == 1);
+
+    refRelease(pointerValue);
+    refRelease(stringValue);
+
+    refRelease(objectType);
+    basicTypesDestroy(&basicTypes);
 }

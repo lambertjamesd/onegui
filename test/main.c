@@ -1,13 +1,13 @@
 #include "test.h"
 
 void testRef();
-void testRefRelease();
 void testBasicTypes();
+void basicTypesObjectType();
 
 int main(int argc, char* argv[]) {
     TEST_RUN(testRef);
-    TEST_RUN(testRefRelease);
     TEST_RUN(testBasicTypes);
+    TEST_RUN(basicTypesObjectType);
 
     return testRunSummary();
 }

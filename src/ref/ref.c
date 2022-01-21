@@ -9,6 +9,7 @@ struct RefHeader {
     struct DataType* dataType;
 };
 
+void refReleaseType(void* obj, struct DataType* dataType);
 void refReleaseChildren(void* obj, struct DataType* dataType);
 
 bool refIsCounted(struct DataType* dataType) {
@@ -158,7 +159,7 @@ void refReleaseArray(void* firstElement, struct DataType* subType, unsigned coun
     size_t subTypeSize = dataTypeSize(subType);
     
     for (unsigned i = 0; i < count; ++i) {
-        refReleaseChildren(iterator, subType);
+        refReleaseType(iterator, subType);
         iterator += subTypeSize;
     }
 }
@@ -172,19 +173,35 @@ void refReleaseObject(void* firstElement, struct ObjectDataType* objectType) {
             continue;
         }
 
-        switch (curr->type->type) {
-            case DataTypePointer:
-            case DataTypeString:
-                refRelease(*((void**)(structStart + curr->offset)));
-                break;
-            case DataTypeFixedArray:
-            case DataTypeVariableArray:
-            case DataTypeObject:
-                refReleaseChildren(structStart + curr->offset, curr->type);
-                break;
-            default:
-                break;
-        }
+        refReleaseType(structStart + curr->offset, curr->type);
+    }
+}
+
+void refReleaseType(void* obj, struct DataType* dataType) {
+    if (!dataType) {
+        return;
+    }
+
+    switch (dataType->type) {
+        case DataTypePointer:
+        case DataTypeString:
+            refRelease(*((void**)(obj)));
+            break;
+        case DataTypeFixedArray:
+            refReleaseArray(obj, ((struct FixedArrayDataType*)dataType)->subType, ((struct FixedArrayDataType*)dataType)->elementCount);
+            break;
+        case DataTypeVariableArray:
+            {
+                struct DynamicArray* arr = (struct DynamicArray*)obj;
+                refReleaseArray(&arr->data, ((struct VariableArrayDataType*)dataType)->subType, arr->header.count);
+            }
+            break;
+        case DataTypeObject:
+            refReleaseObject(obj, (struct ObjectDataType*)dataType);
+            break;
+        default:
+            // do nothing for all other types
+            break;
     }
 }
 

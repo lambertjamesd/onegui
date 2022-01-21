@@ -188,3 +188,39 @@ void basicTypesObjectType() {
     refRelease(objectType);
     basicTypesDestroy(&basicTypes);
 }
+
+struct PointerArray {
+    struct DynamicArrayHeader header;
+    void* data[];
+};
+
+void basicTypesArrayType() {
+    struct BasicDataTypes basicTypes;
+    basicTypesInit(&basicTypes);
+
+    struct VariableArrayDataType* pointerArray = basicTypesNewVariableArray(&basicTypes, (struct DataType*)basicTypes.pointerToUnknownType);
+
+    struct PointerArray* array = (struct PointerArray*)refMallocArray(pointerArray, 3);
+
+    void* ptr = refMallocArray(pointerArray, 1);
+
+    array->header.count = 2;
+    array->data[0] = ptr;
+    refRetain(ptr);
+
+    // this reference should not be released 
+    // since it isn't in the range for count even
+    // if it is within the capacy to the array 
+    array->data[2] = ptr;
+    refRetain(ptr);
+
+    TEST_ASSERT(_refGetCount(ptr) == 3);
+    refRelease(array);
+    TEST_ASSERT(_refGetCount(ptr) == 2);
+    refRelease(array);
+    refRelease(array);
+
+    refRelease(pointerArray);
+
+    basicTypesDestroy(&basicTypes);
+}

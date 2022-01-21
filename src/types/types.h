@@ -59,8 +59,8 @@ struct StringDataType {
 
 struct FixedArrayDataType {
     uint32_t type;
+    uint32_t elementCount;
     struct DataType* subType;
-    unsigned int elementCount;
 };
 
 struct VariableArrayDataType {

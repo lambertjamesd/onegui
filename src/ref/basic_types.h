@@ -13,7 +13,7 @@ struct BasicDataTypes {
     struct ObjectDataType* pointerDataType;
     struct StringDataType* stringDataType;
     struct DataType* unknownType;
-    struct PointerDataType* weakPointerToUnknownType;
+    struct PointerDataType* pointerToUnknownType;
     struct ObjectDataType* variableArrayDataType;
     struct ObjectDataType* fixedArrayDataType;
 };

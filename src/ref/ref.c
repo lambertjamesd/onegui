@@ -12,6 +12,10 @@ struct RefHeader {
 void refReleaseChildren(void* obj, struct DataType* dataType);
 
 bool refIsCounted(struct DataType* dataType) {
+    if (dataType == NULL) {
+        return false;
+    }
+    
     return dataType->type == DataTypePointer || dataType->type == DataTypeFixedArray || dataType->type == DataTypeVariableArray || dataType->type == DataTypeObject || dataType->type == DataTypeOpaque;
 }
 
@@ -96,7 +100,12 @@ OString refMallocString(struct StringDataType* dataType, unsigned byteLength, ch
         lenData >>= 7;
     }
 
-    OString result = malloc(byteLength + prefixLength);
+    struct RefHeader* header = malloc(byteLength + prefixLength + sizeof(struct RefHeader));
+    header->refCount = 1;
+    header->dataType = (struct DataType*)dataType;
+    refRetain(dataType);
+
+    char* result = (char*)(header + 1);
 
     int lengthIndex = 0;
     lenData = byteLength;

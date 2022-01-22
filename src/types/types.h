@@ -63,7 +63,7 @@ struct FixedArrayDataType {
     struct DataType* subType;
 };
 
-struct VariableArrayDataType {
+struct DynamicArrayDataType {
     uint32_t type;
     struct DataType* subType;
 };

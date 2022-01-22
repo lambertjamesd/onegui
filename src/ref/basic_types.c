@@ -14,7 +14,7 @@ void basicTypesInit(struct BasicDataTypes* into) {
     into->objectSubType->byteSize = sizeof(struct ObjectSubType);
 
     // ref type for struct ObjectSubTypeArray
-    into->objectSubTypeArray = _refMallocRaw(sizeof(struct VariableArrayDataType));
+    into->objectSubTypeArray = _refMallocRaw(sizeof(struct DynamicArrayDataType));
     into->objectSubTypeArray->type = DataTypeVariableArray;
     into->objectSubTypeArray->subType = (struct DataType*)into->objectSubType;
     refRetain(into->objectSubType);
@@ -55,9 +55,9 @@ void basicTypesInit(struct BasicDataTypes* into) {
     basicTypesAppendSubType(into, into->pointerDataType, "subType", (struct DataType*)into->pointerToUnknownType, offsetof(struct PointerDataType, subType));
     _refChangeType(into->pointerToObjectSubTypeArray, (struct DataType*)into->pointerDataType);
 
-    into->variableArrayDataType = basicTypesNewObject(into, sizeof(struct VariableArrayDataType), 2);
-    basicTypesAppendSubType(into, into->variableArrayDataType, "type", into->primitiveTypes[DataTypeUInt32], 0);
-    basicTypesAppendSubType(into, into->variableArrayDataType, "subType", (struct DataType*)into->pointerToUnknownType, offsetof(struct VariableArrayDataType, subType));
+    into->dynamicArrayDataType = basicTypesNewObject(into, sizeof(struct DynamicArrayDataType), 2);
+    basicTypesAppendSubType(into, into->dynamicArrayDataType, "type", into->primitiveTypes[DataTypeUInt32], 0);
+    basicTypesAppendSubType(into, into->dynamicArrayDataType, "subType", (struct DataType*)into->pointerToUnknownType, offsetof(struct DynamicArrayDataType, subType));
 
     into->fixedArrayDataType = basicTypesNewObject(into, sizeof(struct FixedArrayDataType), 3);
     basicTypesAppendSubType(into, into->fixedArrayDataType, "type", into->primitiveTypes[DataTypeUInt32], 0);
@@ -73,7 +73,7 @@ void basicTypesInit(struct BasicDataTypes* into) {
     basicTypesAppendSubType(into, into->objectSubType, "type", (struct DataType*)into->pointerToUnknownType, offsetof(struct ObjectSubType, type));
     basicTypesAppendSubType(into, into->objectSubType, "offset", into->primitiveTypes[DataTypeUInt32], offsetof(struct ObjectSubType, offset));
 
-    _refChangeType(into->objectSubTypeArray, (struct DataType*)into->variableArrayDataType);
+    _refChangeType(into->objectSubTypeArray, (struct DataType*)into->dynamicArrayDataType);
     _refChangeType(into->objectDataType, (struct DataType*)into->objectDataType);
     into->objectDataType->objectSubTypes = (struct ObjectSubTypeArray*)refMallocArray(into->objectSubTypeArray, 3);
     basicTypesAppendSubType(into, into->objectDataType, "type", into->primitiveTypes[DataTypeUInt32], 0);
@@ -129,7 +129,7 @@ void basicTypesDestroy(struct BasicDataTypes* basicTypes) {
     basicTypes->pointerToUnknownType->subType = NULL;
     refRelease(basicTypes->pointerToUnknownType);
 
-    _basicTypesDestroyObjectDataType(basicTypes->variableArrayDataType);
+    _basicTypesDestroyObjectDataType(basicTypes->dynamicArrayDataType);
     _basicTypesDestroyObjectDataType(basicTypes->fixedArrayDataType);
 }
 
@@ -182,8 +182,8 @@ struct PointerDataType* basicTypesNewWeakPointerType(struct BasicDataTypes* basi
     return result;
 }
 
-struct VariableArrayDataType* basicTypesNewVariableArray(struct BasicDataTypes* basicTypes, struct DataType* elementType) {
-    struct VariableArrayDataType* result = refMalloc((struct DataType*)basicTypes->variableArrayDataType);
+struct DynamicArrayDataType* basicTypesNewVariableArray(struct BasicDataTypes* basicTypes, struct DataType* elementType) {
+    struct DynamicArrayDataType* result = refMalloc((struct DataType*)basicTypes->dynamicArrayDataType);
     result->type = DataTypeVariableArray;
     result->subType = elementType;
     refRetain(elementType);
@@ -192,7 +192,7 @@ struct VariableArrayDataType* basicTypesNewVariableArray(struct BasicDataTypes* 
 
 struct FixedArrayDataType* basicTypesNewFixedArray(struct BasicDataTypes* basicTypes, struct DataType* elementType, unsigned size) {
     struct FixedArrayDataType* result = refMalloc((struct DataType*)basicTypes->fixedArrayDataType);
-    result->type = DataTypeVariableArray;
+    result->type = DataTypeFixedArray;
     result->subType = elementType;
     refRetain(elementType);
     result->elementCount = size;

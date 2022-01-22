@@ -72,7 +72,7 @@ void* refMalloc(struct DataType* dataType) {
     return result + 1;
 }
 
-struct DynamicArray* refMallocArray(struct VariableArrayDataType* dataType, unsigned capacity) {
+struct DynamicArray* refMallocArray(struct DynamicArrayDataType* dataType, unsigned capacity) {
     unsigned allocationSize = dataTypeSize(dataType->subType) * capacity + 
         sizeof(struct DynamicArrayHeader) + 
         sizeof(struct RefHeader);
@@ -120,13 +120,14 @@ OString refMallocString(struct StringDataType* dataType, unsigned byteLength, ch
     return result;
 }
 
-void refRetain(void* obj) {
+void* refRetain(void* obj) {
     if (!obj) {
-        return;
+        return NULL;
     }
 
     struct RefHeader* header = (struct RefHeader*)obj - 1;
     header->refCount++;
+    return obj;
 }
 
 void refFree(void* obj) {
@@ -193,7 +194,7 @@ void refReleaseType(void* obj, struct DataType* dataType) {
         case DataTypeVariableArray:
             {
                 struct DynamicArray* arr = (struct DynamicArray*)obj;
-                refReleaseArray(&arr->data, ((struct VariableArrayDataType*)dataType)->subType, arr->header.count);
+                refReleaseArray(&arr->data, ((struct DynamicArrayDataType*)dataType)->subType, arr->header.count);
             }
             break;
         case DataTypeObject:
@@ -217,7 +218,7 @@ void refReleaseChildren(void* obj, struct DataType* dataType) {
         case DataTypeVariableArray:
             {
                 struct DynamicArray* arr = (struct DynamicArray*)obj;
-                refReleaseArray(&arr->data, ((struct VariableArrayDataType*)dataType)->subType, arr->header.count);
+                refReleaseArray(&arr->data, ((struct DynamicArrayDataType*)dataType)->subType, arr->header.count);
             }
             break;
         case DataTypeObject:

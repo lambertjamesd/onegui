@@ -8,14 +8,14 @@ struct BasicDataTypes {
 
     struct ObjectDataType* objectDataType;
     struct ObjectDataType* objectSubType;
-    struct VariableArrayDataType* objectSubTypeArray;
+    struct DynamicArrayDataType* objectSubTypeArray;
     struct PointerDataType* pointerToObjectSubTypeArray;
     struct ObjectDataType* primitiveDataType;
     struct ObjectDataType* pointerDataType;
     struct StringDataType* stringDataType;
     struct DataType* unknownType;
     struct PointerDataType* pointerToUnknownType;
-    struct ObjectDataType* variableArrayDataType;
+    struct ObjectDataType* dynamicArrayDataType;
     struct ObjectDataType* fixedArrayDataType;
 };
 
@@ -27,7 +27,7 @@ struct ObjectDataType* basicTypesNewObject(struct BasicDataTypes* basicTypes, si
 void basicTypesAppendSubType(struct BasicDataTypes* basicTypes, struct ObjectDataType* onto, char* cStrName, struct DataType* subType, unsigned offset);
 struct PointerDataType* basicTypesNewPointerType(struct BasicDataTypes* basicTypes, struct DataType* pointTo);
 struct PointerDataType* basicTypesNewWeakPointerType(struct BasicDataTypes* basicTypes, struct DataType* pointTo);
-struct VariableArrayDataType* basicTypesNewVariableArray(struct BasicDataTypes* basicTypes, struct DataType* elementType);
+struct DynamicArrayDataType* basicTypesNewVariableArray(struct BasicDataTypes* basicTypes, struct DataType* elementType);
 struct FixedArrayDataType* basicTypesNewFixedArray(struct BasicDataTypes* basicTypes, struct DataType* elementType, unsigned size);
 
 #endif

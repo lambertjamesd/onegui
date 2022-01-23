@@ -14,6 +14,7 @@ struct DynamicArrayDataType* typeBuilderNewVariableArray(struct DataType* elemen
 struct DataType* typeBuilderNewFixedArray(struct DataType* elementType, unsigned size);
 struct DataType* typeBuilderGetPointerToUnknown();
 struct DataType* typeBuilderGetWeakPointerToUnknown();
+struct StringDataType* typeBuilderGetStringType();
 
 #define TYPE_BUILDER_APPEND_SUB_TYPE(object, structureType, name, dataType) typeBuilderAppendSubType(object, #name, dataType, offsetof(structureType, name))
 

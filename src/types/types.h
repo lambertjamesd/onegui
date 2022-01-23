@@ -44,6 +44,7 @@ enum DataTypeType {
 };
 
 typedef char* OString;
+typedef const char* ConstOString;
 
 struct DataType {
     uint32_t type;

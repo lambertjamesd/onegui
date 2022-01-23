@@ -2,9 +2,18 @@
 #define __ONEGUI_STRING_H__
 
 #include <stdbool.h>
+#include "types.h"
 
-int ostrLen(const char* ostr);
-bool ostrEqual(const char* a, const char* b);
-bool ostrEqualCStr(const char* ostr, const char* cstr);
+#include "../ref/ref.h"
+#include "../types/type_builder.h"
+#include <string.h>
+
+#define OSTR_NEW_FROM_CSTR(cstr) refMallocString(typeBuilderGetStringType(), strlen(cstr), cstr)
+
+OString ostrNewFromCStr(const char* cstr);
+const char* ostrToCStr(const char* input, int* output);
+int ostrLen(ConstOString ostr);
+bool ostrEqual(ConstOString a, ConstOString b);
+bool ostrEqualCStr(ConstOString ostr, const char* cstr);
 
 #endif

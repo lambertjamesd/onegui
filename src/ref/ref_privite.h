@@ -4,7 +4,7 @@
 #include "ref.h"
 
 void* _refMallocRaw(size_t size);
-int _refGetCount(void* obj);
+int _refGetCount(const void* obj);
 void _refChangeType(void* obj, struct DataType* dataType);
 
 #endif

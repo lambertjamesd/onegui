@@ -1,5 +1,6 @@
 #include "hash_table.h"
 #include "../types/type_builder.h"
+#include "../types/string.h"
 
 struct DataType* _gHashTableType;
 struct DynamicArrayDataType* _gHashTableEntryTables[4];
@@ -22,7 +23,7 @@ int _hashTableArrayTypeIndex(enum HashTableFlags flags) {
 }
 
 struct DynamicArrayDataType* _hashTableBuildHashEntryArrayType(enum HashTableFlags flags) {
-    struct DataType* elementType = typeBuilderNewObject(sizeof(struct HashTable), 3);
+    struct DataType* elementType = typeBuilderNewObject(sizeof(struct HashEntry), 3);
 
     TYPE_BUILDER_APPEND_SUB_TYPE(
         elementType,
@@ -255,4 +256,73 @@ void hashTableDelete(struct HashTable* table, uint64_t key) {
     if (table->entryCount < table->entryArray->header.count / 4 && table->entryArray->header.count > INITIAL_CAPACITY) {
         _hashTableSetNewSize(table, table->entryArray->header.count / 2, table->binArray->header.count / 2);
     }
+}
+
+
+void hashTableSetK(struct HashTable* table, void* key, uint64_t value) {
+    hashTableSet(table, (uint64_t)key, value);
+}
+
+bool hashTableGetK(struct HashTable* table, void* key, uint64_t* result) {
+    return hashTableGet(table, (uint64_t)key, result);
+}
+
+void hashTableDeleteK(struct HashTable* table, void* key) {
+    hashTableDelete(table, (uint64_t)key);
+}
+
+void hashTableSetKV(struct HashTable* table, void* key, void* value) {
+    hashTableSet(table, (uint64_t)key, (uint64_t)value);
+}
+
+bool hashTableGetKV(struct HashTable* table, void* key, void** result) {
+    uint64_t resultInt64;
+    bool returnValue = hashTableGet(table, (uint64_t)key, &resultInt64);
+    if (result) {
+        *result = (void*)resultInt64;
+    }
+    return returnValue;
+}
+
+void hashTableSetV(struct HashTable* table, uint64_t key, void* value) {
+    hashTableSet(table, key, (uint64_t)value);
+}
+
+bool hashTableGetV(struct HashTable* table, uint64_t key, void** result) {
+    uint64_t resultInt64;
+    bool returnValue = hashTableGet(table, key, &resultInt64);
+    if (result) {
+        *result = (void*)resultInt64;
+    }
+    return returnValue;
+}
+
+uint32_t hashTableSize(struct HashTable* table) {
+    return table->entryCount;
+}
+
+uint64_t hashTableIntegerHash(uint64_t key) {
+    return key * 138356287190760817U;
+}
+
+bool hashTableBasicEquality(uint64_t a, uint64_t b) {
+    return a == b;
+}
+
+uint64_t hashTableStringHash(uint64_t key) {
+    int len;
+    const char* cstr = ostrToCStr((char*)key, &len);
+
+    uint64_t hash = 5381;
+    const char* end = cstr + len;
+
+    for (const char* curr = cstr; curr < end; ++curr) {
+        hash = ((hash << 5) + hash) + *curr;
+    }
+
+    return hash;
+}
+
+bool hashTableStringEquality(uint64_t a, uint64_t b) {
+    return ostrEqual((char*)a, (char*)b);
 }

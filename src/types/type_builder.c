@@ -7,6 +7,7 @@ struct DataType* _gUnknownWeakPointer;
 
 void typeBuilderInit() {
     basicTypesInit(&_gBasicDataTypes);
+    _gUnknownWeakPointer = (struct DataType*)basicTypesNewWeakPointerType(&_gBasicDataTypes, (struct DataType*)_gBasicDataTypes.unknownType);
 }
 
 struct DataType* typeBuilderGetPrimitive(enum DataTypeType type) {
@@ -47,4 +48,8 @@ struct DataType* typeBuilderGetPointerToUnknown() {
 
 struct DataType* typeBuilderGetWeakPointerToUnknown() {
     return _gUnknownWeakPointer;
+}
+
+struct StringDataType* typeBuilderGetStringType() {
+    return _gBasicDataTypes.stringDataType;
 }

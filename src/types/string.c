@@ -1,6 +1,10 @@
 #include "string.h"
 
-const char* _ostrLen(const char* input, int* output) {
+OString ostrNewFromCStr(const char* cstr) {
+    return refMallocString(typeBuilderGetStringType(), strlen(cstr), cstr);
+}
+
+const char* ostrToCStr(ConstOString input, int* output) {
     int result = *input & 0x7F;
 
     while ((*input) & 0x80) {
@@ -17,18 +21,18 @@ const char* _ostrLen(const char* input, int* output) {
     return input;
 }
 
-int ostrLen(const char* ostr) {
+int ostrLen(ConstOString ostr) {
     int result;
-    _ostrLen(ostr, &result);
+    ostrToCStr(ostr, &result);
     return result;
 }
 
-bool ostrEqual(const char* a, const char* b) {
+bool ostrEqual(ConstOString a, ConstOString b) {
     int aLen;
     int bLen;
 
-    a = _ostrLen(a, &aLen);
-    b = _ostrLen(b, &bLen);
+    a = ostrToCStr(a, &aLen);
+    b = ostrToCStr(b, &bLen);
 
     if (aLen != bLen) {
         return false;
@@ -43,10 +47,10 @@ bool ostrEqual(const char* a, const char* b) {
     return true;
 }
 
-bool ostrEqualCStr(const char* ostr, const char* cstr) {
+bool ostrEqualCStr(ConstOString ostr, ConstOString cstr) {
     int len;
 
-    ostr = _ostrLen(ostr, &len);
+    ostr = ostrToCStr(ostr, &len);
 
     for (int i = 0; i < len; ++i) {
         if (!*cstr || ostr[i] != cstr[i]) {

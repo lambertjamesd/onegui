@@ -51,7 +51,7 @@ struct DataType* refGetDataType(void* obj) {
     return header->dataType;
 }
 
-int _refGetCount(void* obj) {
+int _refGetCount(const void* obj) {
     if (!obj) {
         return 0;
     }
@@ -92,7 +92,7 @@ struct DynamicArray* refMallocArray(struct DynamicArrayDataType* dataType, unsig
     return (struct DynamicArray*)header;
 }
 
-OString refMallocString(struct StringDataType* dataType, unsigned byteLength, char* dataSource) {
+OString refMallocString(struct StringDataType* dataType, unsigned byteLength, const char* dataSource) {
     int prefixLength = 1;
     int lenData = byteLength;
 

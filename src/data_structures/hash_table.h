@@ -42,6 +42,8 @@ struct HashTable {
     uint32_t hashTableFlags;
 };
 
+#define HASH_TABLE_NEW_STR_STR()    hashTableNew(hashTableStringEquality, hashTableStringHash, HashTableFlagsRetainKey | HashTableFlagsRetainValue)
+
 struct HashTable* hashTableNew(HashEntryEqualityCompare equalityCompare, HashEntryHashFunction hashFunction, enum HashTableFlags flags);
 
 void hashTableTypeInit();
@@ -49,5 +51,25 @@ void hashTableTypeInit();
 void hashTableSet(struct HashTable* table, uint64_t key, uint64_t value);
 bool hashTableGet(struct HashTable* table, uint64_t key, uint64_t* result);
 void hashTableDelete(struct HashTable* table, uint64_t key);
+
+// these are helper functions for hash tables that 
+// store pointers to objects
+void hashTableSetK(struct HashTable* table, void* key, uint64_t value);
+bool hashTableGetK(struct HashTable* table, void* key, uint64_t* result);
+void hashTableDeleteK(struct HashTable* table, void* key);
+
+void hashTableSetKV(struct HashTable* table, void* key, void* value);
+bool hashTableGetKV(struct HashTable* table, void* key, void** result);
+
+void hashTableSetV(struct HashTable* table, uint64_t key, void* value);
+bool hashTableGetV(struct HashTable* table, uint64_t key, void** result);
+
+uint32_t hashTableSize(struct HashTable* table);
+
+uint64_t hashTableIntegerHash(uint64_t key);
+bool hashTableBasicEquality(uint64_t a, uint64_t b);
+
+uint64_t hashTableStringHash(uint64_t key);
+bool hashTableStringEquality(uint64_t a, uint64_t b);
 
 #endif

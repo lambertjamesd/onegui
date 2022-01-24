@@ -42,7 +42,7 @@ void _refChangeType(void* obj, struct DataType* dataType) {
     refRetain(dataType);
 }
 
-struct DataType* refGetDataType(void* obj) {
+struct DataType* refGetDataType(const void* obj) {
     if (!obj) {
         return 0;
     }

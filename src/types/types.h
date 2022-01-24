@@ -76,7 +76,7 @@ struct DynamicArrayHeader {
 
 struct DynamicArray {
     struct DynamicArrayHeader header;
-    char* data[];
+    char data[];
 };
 
 struct PointerDataType {

@@ -11,6 +11,7 @@ void basicTypesWeakPointer();
 void basicTypesNestedStructure();
 void testHashTable();
 void testHashTableKeyReference();
+void testRangedBinaryTree();
 
 int main(int argc, char* argv[]) {
     oneGuiInit();
@@ -24,6 +25,7 @@ int main(int argc, char* argv[]) {
     TEST_RUN(basicTypesNestedStructure);
     TEST_RUN(testHashTable);
     TEST_RUN(testHashTableKeyReference);
+    TEST_RUN(testRangedBinaryTree);
 
     return testRunSummary();
 }

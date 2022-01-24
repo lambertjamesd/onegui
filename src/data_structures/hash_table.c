@@ -9,17 +9,7 @@ struct DynamicArrayDataType* _gHashTableBinArrayType;
 #define INITIAL_CAPACITY 8
 
 int _hashTableArrayTypeIndex(enum HashTableFlags flags) {
-    int result = 0;
-
-    if (flags & HashTableFlagsRetainKey) {
-        result |= 2;
-    }
-
-    if (flags & HashTableFlagsRetainValue) {
-        result |= 1;
-    }
-
-    return result;
+    return flags & (HashTableFlagsRetainKey | HashTableFlagsRetainValue);
 }
 
 struct DynamicArrayDataType* _hashTableBuildHashEntryArrayType(enum HashTableFlags flags) {

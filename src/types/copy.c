@@ -78,7 +78,7 @@ bool oneGuiDeepCopyContent(const void* src, void* dest, struct DataType* type, s
             struct FixedArrayDataType* arrayType = (struct FixedArrayDataType*)type;
             return oneGuiDeepCopyArray(src, dest, arrayType->subType, arrayType->elementCount, state);
         }
-        case DataTypeVariableArray:
+        case DataTypeDynamicArray:
         {
             struct DynamicArrayDataType* arrayType = (struct DynamicArrayDataType*)type;
             struct DynamicArray* srcArray = (struct DynamicArray*)src;
@@ -163,7 +163,7 @@ void* oneGuiDeepCopyWithState(const void* ref, struct OGDeepCopyState* state) {
     void* result;
     uint32_t size;
 
-    if (type->type == DataTypeVariableArray) {
+    if (type->type == DataTypeDynamicArray) {
         struct DynamicArrayDataType* arrayType = (struct DynamicArrayDataType*)type;
         struct DynamicArray* srcArray = (struct DynamicArray*)ref;
         result = refMallocArray(arrayType, srcArray->header.capacity);

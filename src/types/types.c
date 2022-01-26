@@ -28,7 +28,7 @@ size_t dataTypeSize(struct DataType* type) {
             struct FixedArrayDataType* asArrayType = (struct FixedArrayDataType*)type;
             return dataTypeSize(asArrayType->subType) * asArrayType->elementCount;
         }
-        case DataTypeVariableArray:
+        case DataTypeDynamicArray:
             // minimum size, actual size may vary
             return sizeof(struct DynamicArrayHeader);
         case DataTypeObject:

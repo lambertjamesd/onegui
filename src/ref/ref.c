@@ -17,7 +17,7 @@ bool refIsCounted(struct DataType* dataType) {
         return false;
     }
     
-    return dataType->type == DataTypePointer || dataType->type == DataTypeFixedArray || dataType->type == DataTypeVariableArray || dataType->type == DataTypeObject || dataType->type == DataTypeOpaque;
+    return dataType->type == DataTypePointer || dataType->type == DataTypeFixedArray || dataType->type == DataTypeDynamicArray || dataType->type == DataTypeObject || dataType->type == DataTypeOpaque;
 }
 
 void* _refMallocRaw(size_t size) {
@@ -191,7 +191,7 @@ void refReleaseType(void* obj, struct DataType* dataType) {
         case DataTypeFixedArray:
             refReleaseArray(obj, ((struct FixedArrayDataType*)dataType)->subType, ((struct FixedArrayDataType*)dataType)->elementCount);
             break;
-        case DataTypeVariableArray:
+        case DataTypeDynamicArray:
             {
                 struct DynamicArray* arr = (struct DynamicArray*)obj;
                 refReleaseArray(&arr->data, ((struct DynamicArrayDataType*)dataType)->subType, arr->header.count);
@@ -215,7 +215,7 @@ void refReleaseChildren(void* obj, struct DataType* dataType) {
         case DataTypeFixedArray:
             refReleaseArray(obj, ((struct FixedArrayDataType*)dataType)->subType, ((struct FixedArrayDataType*)dataType)->elementCount);
             break;
-        case DataTypeVariableArray:
+        case DataTypeDynamicArray:
             {
                 struct DynamicArray* arr = (struct DynamicArray*)obj;
                 refReleaseArray(&arr->data, ((struct DynamicArrayDataType*)dataType)->subType, arr->header.count);

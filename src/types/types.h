@@ -28,7 +28,7 @@ enum DataTypeType {
     DataTypePointer,
 
     DataTypeFixedArray,
-    DataTypeVariableArray,
+    DataTypeDynamicArray,
     DataTypeObject,
 
     // Used to allow pointers to 
@@ -43,29 +43,39 @@ enum DataTypeType {
     DataTypeOpaque,
 };
 
+enum DataTypeFlags {
+    DataTypeFlagsHasStringRef = (1 << 0),
+    DataTypeFlagsHasWeakRef = (1 << 1),
+};
+
 typedef char* OString;
 typedef const char* ConstOString;
 
 struct DataType {
-    uint32_t type;
+    uint16_t type;
+    uint16_t flags;
 };
 
 struct PrimitiveDataType {
-    uint32_t type;
+    uint16_t type;
+    uint16_t flags;
 };
 
 struct StringDataType {
-    uint32_t type;
+    uint16_t type;
+    uint16_t flags;
 };
 
 struct FixedArrayDataType {
-    uint32_t type;
+    uint16_t type;
+    uint16_t flags;
     uint32_t elementCount;
     struct DataType* subType;
 };
 
 struct DynamicArrayDataType {
-    uint32_t type;
+    uint16_t type;
+    uint16_t flags;
     struct DataType* subType;
 };
 
@@ -80,14 +90,16 @@ struct DynamicArray {
 };
 
 struct PointerDataType {
-    uint32_t type;
+    uint16_t type;
+    uint16_t flags;
     struct DataType* subType;
 };
 
 struct ObjectSubTypeArray;
 
 struct ObjectDataType {
-    uint32_t type;
+    uint16_t type;
+    uint16_t flags;
     uint32_t byteSize;
     struct ObjectSubTypeArray* objectSubTypes;
 };

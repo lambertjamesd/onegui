@@ -10,23 +10,29 @@ void basicTypesInit(struct BasicDataTypes* into) {
 
     // ref type for struct ObjectSubType
     into->objectSubType = _refMallocRaw(sizeof(struct ObjectDataType));
+    // flags are populated later when appending sub types
+    into->objectSubType->flags = 0;
     into->objectSubType->type = DataTypeObject;
     into->objectSubType->byteSize = sizeof(struct ObjectSubType);
 
     // ref type for struct ObjectSubTypeArray
     into->objectSubTypeArray = _refMallocRaw(sizeof(struct DynamicArrayDataType));
+    into->objectSubTypeArray->flags = DataTypeFlagsHasStrongRef;
     into->objectSubTypeArray->type = DataTypeDynamicArray;
     into->objectSubTypeArray->subType = (struct DataType*)into->objectSubType;
     refRetain(into->objectSubType);
 
     into->pointerToObjectSubTypeArray = _refMallocRaw(sizeof(struct PointerDataType));
     into->pointerToObjectSubTypeArray->type = DataTypePointer;
+    into->pointerToObjectSubTypeArray->flags = DataTypeFlagsHasStrongRef;
     into->pointerToObjectSubTypeArray->subType = (struct DataType*)into->objectSubTypeArray;
     refRetain(into->pointerToObjectSubTypeArray->subType);
 
     // ref type for struct ObjectSubType
     into->objectDataType = _refMallocRaw(sizeof(struct ObjectDataType));
     into->objectDataType->type = DataTypeObject;
+    // flags are populated later when appending sub types
+    into->objectDataType->flags = 0;
     into->objectDataType->byteSize = sizeof(struct ObjectDataType);
 
     // needed to create the string type
@@ -34,6 +40,7 @@ void basicTypesInit(struct BasicDataTypes* into) {
     
     // needed to call basicTypesAppendSubType
     into->stringDataType = refMalloc((struct DataType*)into->primitiveDataType);
+    into->stringDataType->flags = DataTypeFlagsHasStrongRef;
     into->stringDataType->type = DataTypeString;
 
     for (unsigned i = 0; i < DataTypePrimitiveCount; ++i) {
@@ -149,6 +156,7 @@ struct DataType* basicTypesGetPrimitive(struct BasicDataTypes* basicTypes, enum 
 struct ObjectDataType* basicTypesNewObject(struct BasicDataTypes* basicTypes, size_t size, unsigned elementCount) {
     struct ObjectDataType* result = refMalloc((struct DataType*)basicTypes->objectDataType);
     result->type = DataTypeObject;
+    result->flags = 0;
     result->byteSize = size;
     result->objectSubTypes = (struct ObjectSubTypeArray*)refMallocArray(basicTypes->objectSubTypeArray, elementCount);
 
@@ -168,12 +176,15 @@ void basicTypesAppendSubType(struct BasicDataTypes* basicTypes, struct ObjectDat
     refRetain(subType);
     target->offset = offset;
 
+    onto->flags |= subType->flags & (DataTypeFlagsHasStrongRef | DataTypeFlagsHasWeakRef);
+
     onto->objectSubTypes->header.count++;
 }
 
 struct PointerDataType* basicTypesNewPointerType(struct BasicDataTypes* basicTypes, struct DataType* pointTo) {
     struct PointerDataType* result = refMalloc((struct DataType*)basicTypes->pointerDataType);
     result->type = DataTypePointer;
+    result->flags = DataTypeFlagsHasStrongRef;
     result->subType = pointTo;
     refRetain(pointTo);
     return result;
@@ -182,6 +193,7 @@ struct PointerDataType* basicTypesNewPointerType(struct BasicDataTypes* basicTyp
 struct PointerDataType* basicTypesNewWeakPointerType(struct BasicDataTypes* basicTypes, struct DataType* pointTo) {
     struct PointerDataType* result = refMalloc((struct DataType*)basicTypes->pointerDataType);
     result->type = DataTypeWeakPointer;
+    result->flags = DataTypeFlagsHasWeakRef;
     result->subType = pointTo;
     refRetain(pointTo);
     return result;
@@ -190,6 +202,7 @@ struct PointerDataType* basicTypesNewWeakPointerType(struct BasicDataTypes* basi
 struct DynamicArrayDataType* basicTypesNewVariableArray(struct BasicDataTypes* basicTypes, struct DataType* elementType) {
     struct DynamicArrayDataType* result = refMalloc((struct DataType*)basicTypes->dynamicArrayDataType);
     result->type = DataTypeDynamicArray;
+    result->flags = elementType->flags & (DataTypeFlagsHasStrongRef | DataTypeFlagsHasWeakRef);
     result->subType = elementType;
     refRetain(elementType);
     return result;
@@ -198,6 +211,7 @@ struct DynamicArrayDataType* basicTypesNewVariableArray(struct BasicDataTypes* b
 struct FixedArrayDataType* basicTypesNewFixedArray(struct BasicDataTypes* basicTypes, struct DataType* elementType, unsigned size) {
     struct FixedArrayDataType* result = refMalloc((struct DataType*)basicTypes->fixedArrayDataType);
     result->type = DataTypeFixedArray;
+    result->flags = elementType->flags & (DataTypeFlagsHasStrongRef | DataTypeFlagsHasWeakRef);
     result->subType = elementType;
     refRetain(elementType);
     result->elementCount = size;

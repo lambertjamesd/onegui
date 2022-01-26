@@ -15,6 +15,7 @@ static size_t gDataTypeSizes[] = {
 
     [DataTypeWeakPointer] = sizeof(void*),
     [DataTypePointer] = sizeof(void*),
+    [DataTypeString] = sizeof(void*),
 };
 
 size_t dataTypeSize(struct DataType* type) {

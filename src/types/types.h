@@ -27,6 +27,8 @@ enum DataTypeType {
     // Ref counted
     DataTypePointer,
 
+    DataTypeString,
+
     DataTypeFixedArray,
     DataTypeDynamicArray,
     DataTypeObject,
@@ -35,8 +37,6 @@ enum DataTypeType {
     // point to an unknown type
     DataTypeUnknown,
 
-    DataTypeString,
-
     DataTypeFunction,
 
     // TODO, potentially replace with a byte array
@@ -44,7 +44,7 @@ enum DataTypeType {
 };
 
 enum DataTypeFlags {
-    DataTypeFlagsHasStringRef = (1 << 0),
+    DataTypeFlagsHasStrongRef = (1 << 0),
     DataTypeFlagsHasWeakRef = (1 << 1),
 };
 

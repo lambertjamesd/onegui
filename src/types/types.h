@@ -80,8 +80,8 @@ struct DynamicArrayDataType {
 };
 
 struct DynamicArrayHeader {
-    unsigned count;
-    unsigned capacity;
+    uint32_t count;
+    uint32_t capacity;
 };
 
 struct DynamicArray {
@@ -107,7 +107,7 @@ struct ObjectDataType {
 struct ObjectSubType {
     OString name;
     struct DataType* type;
-    unsigned offset;
+    uint32_t offset;
 };
 
 struct ObjectSubTypeArray {

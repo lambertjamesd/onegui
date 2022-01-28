@@ -21,6 +21,7 @@ void rangeBinaryTreeInit() {
     _gRangeBinaryTreeType = typeBuilderNewObject(sizeof(struct RangedBinaryTree), 1);
 
     TYPE_BUILDER_APPEND_SUB_TYPE(_gRangeBinaryTreeType, struct RangedBinaryTree, root, pointerToNode);
+    TYPE_BUILDER_APPEND_SUB_TYPE(_gRangeBinaryTreeType, struct RangedBinaryTree, size, typeBuilderGetPrimitive(DataTypeUInt32));
 
     refRelease(pointerToNode);    
 }
@@ -132,6 +133,7 @@ bool rangedBinaryTreeInsert(struct RangedBinaryTree* tree, uint64_t at, uint32_t
     }
 
     tree->root = newRoot;
+    tree->size++;
 
     return true;
 }
@@ -158,4 +160,8 @@ bool rangedBinaryTreeNodeGet(struct RangedBinaryTreeNode* node, uint64_t at, str
 
 bool rangedBinaryTreeGet(struct RangedBinaryTree* tree, uint64_t at, struct RangedBinaryTreeNode** result) {
     return rangedBinaryTreeNodeGet(tree->root, at, result);
+}
+
+uint32_t rangedBinaryTreeSize(struct RangedBinaryTree* tree) {
+    return tree->size;
 }

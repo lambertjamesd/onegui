@@ -15,6 +15,7 @@ struct RangedBinaryTreeNode {
 
 struct RangedBinaryTree {
     struct RangedBinaryTreeNode* root;
+    uint32_t size;
 };
 
 void rangeBinaryTreeInit();
@@ -22,6 +23,7 @@ void rangeBinaryTreeInit();
 struct RangedBinaryTree* rangedBinaryTreeNew();
 bool rangedBinaryTreeInsert(struct RangedBinaryTree* tree, uint64_t at, uint32_t len, void* value);
 bool rangedBinaryTreeGet(struct RangedBinaryTree* tree, uint64_t at, struct RangedBinaryTreeNode** result);
+uint32_t rangedBinaryTreeSize(struct RangedBinaryTree* tree);
 
 
 #endif

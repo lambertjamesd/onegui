@@ -22,7 +22,13 @@ struct FileInterface {
     FileSeek seek;
 };
 
-struct ObjectInformation {
+struct OGFile {
+    void* file;
+    struct FileInterface* interface;
+};
+
+struct ObjectExportInformation {
+    void* objectRef;
     OString moduleName;
     OString name;
 };
@@ -32,6 +38,8 @@ struct SerializerState {
     struct HashTable* objectNameToObject;
 };
 
-void oneGuiSerializeWithState(struct SerializerState* state, void* ref, struct FileInterface* fileInterface, void* file);
+void oneGuiSerializeWithState(struct SerializerState* state, struct RangedBinaryTree* namedExports, struct OGFile output);
+
+void oneGuiSerializeExports(struct RangedBinaryTree* namedExports, struct OGFile output);
 
 #endif

@@ -5,6 +5,11 @@ OString ostrNewFromCStr(const char* cstr) {
 }
 
 const char* ostrToCStr(ConstOString input, int* output) {
+    if (!input) {
+        *output = 0;
+        return "";
+    }
+
     int result = *input & 0x7F;
 
     while ((*input) & 0x80) {
@@ -45,6 +50,24 @@ bool ostrEqual(ConstOString a, ConstOString b) {
     }
 
     return true;
+}
+
+int ostrCompare(ConstOString a, ConstOString b) {
+    int aLen;
+    int bLen;
+
+    a = ostrToCStr(a, &aLen);
+    b = ostrToCStr(b, &bLen);
+
+    for (int i = 0; i < aLen && i < bLen; ++i) {
+        int diff = a[i] - b[i];
+
+        if (diff != 0) {
+            return diff;
+        }
+    }
+
+    return aLen - bLen;
 }
 
 bool ostrEqualCStr(ConstOString ostr, ConstOString cstr) {

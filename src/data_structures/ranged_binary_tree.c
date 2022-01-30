@@ -165,3 +165,66 @@ bool rangedBinaryTreeGet(struct RangedBinaryTree* tree, uint64_t at, struct Rang
 uint32_t rangedBinaryTreeSize(struct RangedBinaryTree* tree) {
     return tree->size;
 }
+
+void _rangedBinaryTreeIteratorFallLeft(struct RangedBinaryTreeIterator* iterator, struct RangedBinaryTreeNode* current) {
+    while (current && current->left) {
+        current = current->left;
+        iterator->path &= ~(1 << iterator->depth);
+        iterator->depth++;
+    }
+
+    iterator->current = current;
+}
+
+void rangedBinaryTreeIteratorInit(struct RangedBinaryTreeIterator* iterator, struct RangedBinaryTree* tree) {
+    iterator->depth = 0;
+    iterator->path = 0;
+    iterator->tree = tree;
+    iterator->current = NULL;
+    _rangedBinaryTreeIteratorFallLeft(iterator, tree->root);
+}
+
+struct RangedBinaryTreeNode* rangedBinaryTreeIteratorCurrent(struct RangedBinaryTreeIterator* iterator) {
+    return iterator->current;
+}
+
+bool _rangedBinaryTreeFindLastLeftTurn(struct RangedBinaryTreeIterator* iterator, struct RangedBinaryTreeNode* current, uint32_t depth) {
+    uint32_t depthMask = 1 << depth;
+
+    if (depth < iterator->depth) {
+        bool subResult = _rangedBinaryTreeFindLastLeftTurn(iterator, (depthMask & iterator->path) ? current->right : current->left, depth + 1);
+
+        if (subResult) {
+            return subResult;
+        }
+
+        // if coming from the left, then the current
+        // node becomes the next node
+        if (!(depthMask & iterator->path)) {
+            iterator->depth = depth;
+            iterator->current = current;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void rangedBinaryTreeIteratorNext(struct RangedBinaryTreeIterator* iterator) {
+    if (!iterator->current) {
+        return;
+    }
+
+    if (iterator->current->right) {
+        iterator->path |= (1 << iterator->depth);
+        iterator->depth++;
+        _rangedBinaryTreeIteratorFallLeft(iterator, iterator->current->right);
+        return;
+    }
+
+    if (!_rangedBinaryTreeFindLastLeftTurn(iterator, iterator->tree->root, 0)) {
+        iterator->tree = NULL;
+        iterator->current = NULL;
+        return;
+    }
+}

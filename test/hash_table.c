@@ -82,3 +82,45 @@ void testHashTableKeyReference() {
     refRelease(fizz);
     refRelease(fooCopy);
 }
+
+void hashTableIteratorInit(struct HashTableIterator* out, struct HashTable* table) {
+    out->forTable = table;
+    out->currentBin = 0;
+    out->currentEntry = table->binArray->table[0];
+
+    if (!out->currentEntry) {
+        hashTableIteratorNext(out);
+    }
+}
+
+bool _hashTableIteratorIsValid(struct HashTableIterator* it) {
+    if (!it->currentEntry) {
+        return true;
+    }
+
+    uint32_t entryIndex = (it->currentEntry - &it->forTable->entryArray->table[0]);
+    return entryIndex < it->forTable->entryArray->header.count;
+}
+
+struct HashEntry* hashTableIteratorCurrent(struct HashTableIterator* it) {
+    if (!_hashTableIteratorIsValid(it)) {
+        return NULL;
+    }
+    
+    return it->currentEntry;
+}
+
+void hashTableIteratorNext(struct HashTableIterator* it) {
+    if (it->currentEntry) {
+        if (!_hashTableIteratorIsValid(it)) {
+            return;
+        }
+
+        it->currentEntry = it->currentEntry->next;
+    }
+
+    while (!it->currentEntry && it->currentBin + 1 < it->forTable->binArray->header.count) {
+        ++it->currentBin;
+        it->currentEntry = it->forTable->binArray->table[it->currentBin];
+    }
+}

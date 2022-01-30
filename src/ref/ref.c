@@ -229,3 +229,16 @@ void refReleaseChildren(void* obj, struct DataType* dataType) {
             break;
     }
 }
+
+uint64_t refSize(const void* obj) {
+    struct DataType* type = refGetDataType(obj);
+
+    if (type->type == DataTypeDynamicArray) {
+        struct DynamicArrayDataType* arrayType = (struct DynamicArrayDataType*)type;
+        struct DynamicArrayHeader* asArray = (struct DynamicArrayHeader*)obj;
+
+        return sizeof(struct DynamicArrayHeader) + asArray->capacity * dataTypeSize(arrayType->subType);
+    } else {
+        return dataTypeSize(type);
+    }
+}

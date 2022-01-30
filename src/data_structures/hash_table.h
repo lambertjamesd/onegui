@@ -42,6 +42,12 @@ struct HashTable {
     uint32_t hashTableFlags;
 };
 
+struct HashTableIterator {
+    struct HashTable* forTable;
+    uint32_t currentBin;
+    struct HashEntry* currentEntry;
+};
+
 #define HASH_TABLE_NEW_STR_STR()    hashTableNew(hashTableStringEquality, hashTableStringHash, HashTableFlagsRetainKey | HashTableFlagsRetainValue)
 
 struct HashTable* hashTableNew(HashEntryEqualityCompare equalityCompare, HashEntryHashFunction hashFunction, enum HashTableFlags flags);
@@ -71,5 +77,9 @@ bool hashTableBasicEquality(uint64_t a, uint64_t b);
 
 uint64_t hashTableStringHash(uint64_t key);
 bool hashTableStringEquality(uint64_t a, uint64_t b);
+
+void hashTableIteratorInit(struct HashTableIterator* out, struct HashTable* table);
+struct HashEntry* hashTableIteratorCurrent(struct HashTableIterator* it);
+void hashTableIteratorNext(struct HashTableIterator* it);
 
 #endif

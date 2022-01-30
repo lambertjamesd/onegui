@@ -9,5 +9,6 @@ OString refMallocString(struct StringDataType* dataType, unsigned byteLength, co
 void* refRetain(void* obj);
 void refRelease(void* obj);
 struct DataType* refGetDataType(const void* obj);
+uint64_t refSize(const void* obj);
 
 #endif

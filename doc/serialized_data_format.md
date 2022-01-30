@@ -3,8 +3,8 @@
 A serialized chunk starts with the chunk header
 
 ```
-header = 0xDATA
-length = u32
+header = 'DATA'
+length = u64
 ```
 
 where length is the size of the serialized content

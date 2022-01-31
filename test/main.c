@@ -12,6 +12,7 @@ void basicTypesNestedStructure();
 void testHashTable();
 void testHashTableKeyReference();
 void testRangedBinaryTree();
+void testModuleSerialize();
 
 int main(int argc, char* argv[]) {
     oneGuiInit();
@@ -26,6 +27,7 @@ int main(int argc, char* argv[]) {
     TEST_RUN(testHashTable);
     TEST_RUN(testHashTableKeyReference);
     TEST_RUN(testRangedBinaryTree);
+    TEST_RUN(testModuleSerialize);
 
     return testRunSummary();
 }

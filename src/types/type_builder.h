@@ -16,6 +16,8 @@ struct DataType* typeBuilderGetPointerToUnknown();
 struct DataType* typeBuilderGetWeakPointerToUnknown();
 struct StringDataType* typeBuilderGetStringType();
 
+struct BasicDataTypes* typeBuilderBasicTypes();
+
 #define TYPE_BUILDER_APPEND_SUB_TYPE(object, structureType, name, dataType) typeBuilderAppendSubType(object, #name, dataType, offsetof(structureType, name))
 
 #endif

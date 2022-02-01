@@ -67,11 +67,8 @@ void testModuleSerialize() {
 
     struct ModuleExports moduleExports;
 
-    moduleExports.typeExports = &typeExports->data[0];
-    moduleExports.typeCount = typeExports->header.count;
-
-    moduleExports.valueExports = &dataExports->data[0];
-    moduleExports.valueCount = dataExports->header.count;
+    moduleExports.types = typeExports;
+    moduleExports.values = dataExports;
 
     struct OGFile file;
     TEST_ASSERT(ogFileNativeOpen(&file, "test.ogui", "wb"));

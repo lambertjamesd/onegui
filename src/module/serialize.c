@@ -507,14 +507,25 @@ void _oneGuiSerializeWithState(struct SerializerState* state, struct SerializedC
     ogFileWrite(output, &version, sizeof(uint16_t));
 
     // mark named exports
-    for (uint32_t i = 0; i < exports->typeCount; ++i) {
-        struct SerializedObjectInfo* objectInfo = _oneGuiInsertType(state, chunkState, exports->typeExports[i].name, exports->typeExports[i].exportValue);
+    for (uint32_t i = 0; exports->types && i < exports->types->header.count; ++i) {
+        struct SerializedObjectInfo* objectInfo = _oneGuiInsertType(
+            state, 
+            chunkState, 
+            exports->types->data[i].name, 
+            exports->types->data[i].exportValue
+        );
         objectInfo->serializedIndex = i;
     }
 
     // mark data exports
-    for (uint32_t i = 0; i < exports->valueCount; ++i) {
-        struct SerializedObjectInfo* objectInfo = _oneGuiAddReference(state, chunkState, exports->valueExports[i].name, exports->valueExports[i].exportValue, refGetDataType(exports->valueExports[i].exportValue));
+    for (uint32_t i = 0; exports->values && i < exports->values->header.count; ++i) {
+        struct SerializedObjectInfo* objectInfo = _oneGuiAddReference(
+            state, 
+            chunkState, 
+            exports->values->data[i].name, 
+            exports->values->data[i].exportValue, 
+            refGetDataType(exports->values->data[i].exportValue)
+        );
         objectInfo->serializedIndex = i;
     }
 

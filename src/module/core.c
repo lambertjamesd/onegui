@@ -34,11 +34,10 @@ void coreModuleInit() {
 
     struct ModuleExports moduleExports;
 
-    moduleExports.typeExports = &typeExports->data[0];
-    moduleExports.typeCount = typeExports->header.count;
-
-    moduleExports.valueExports = NULL;
-    moduleExports.valueCount = 0;
+    moduleExports.types = typeExports;
+    moduleExports.values = NULL;
 
     oneGuiExportsAppend(OSTR_NEW_FROM_CSTR("core"), &moduleExports);
+
+    refRelease(typeExports);
 }

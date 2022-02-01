@@ -28,14 +28,13 @@ struct NamedExportArray {
 };
 
 struct ModuleExports {
-    struct NamedExport* typeExports;
-    int32_t typeCount;
-    struct NamedExport* valueExports;
-    int32_t valueCount;
+    struct NamedExportArray* types;
+    struct NamedExportArray* values;
 };
 
 extern struct SerializerState* gSerializerState;
 extern struct DynamicArrayDataType* gNamedExportArrayType;
+extern struct DataType* gModuleExportsType;
 
 void oneGuiExportsInit();
 

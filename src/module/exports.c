@@ -5,6 +5,7 @@
 struct DataType* _gSerializerStateType;
 struct DataType* _gObjectExportInformationType;
 struct DynamicArrayDataType* gNamedExportArrayType;
+struct DataType* gModuleExportsType;
 
 struct SerializerState* gSerializerState;
 
@@ -29,12 +30,20 @@ void oneGuiExportsInit() {
     gNamedExportArrayType = typeBuilderNewVariableArray(namedExportType);
 
     refRelease(namedExportType);
+
+    struct DataType* pointerToArray = typeBuilderNewPointerType((struct DataType*)gNamedExportArrayType);
+
+    gModuleExportsType = typeBuilderNewObject(sizeof(struct ModuleExports), 2);
+    TYPE_BUILDER_APPEND_SUB_TYPE(gModuleExportsType, struct ModuleExports, types, pointerToArray);
+    TYPE_BUILDER_APPEND_SUB_TYPE(gModuleExportsType, struct ModuleExports, values, pointerToArray);
+
+    refRelease(pointerToArray);
 }
 
 void oneGuiExportsAppend(OString moduleName, struct ModuleExports* exports) {
-    for (unsigned i = 0; i < exports->typeCount; ++i) {
+    for (unsigned i = 0; exports->types && i < exports->types->header.count; ++i) {
         struct ObjectExportInformation* exportInfo = refMalloc(_gObjectExportInformationType);
-        struct NamedExport* namedExport = &exports->typeExports[i];
+        struct NamedExport* namedExport = &exports->types->data[i];
 
         exportInfo->objectRef = refRetain(namedExport->exportValue);
         exportInfo->moduleName = refRetain(moduleName);
@@ -44,9 +53,9 @@ void oneGuiExportsAppend(OString moduleName, struct ModuleExports* exports) {
         refRelease(exportInfo);
     }
 
-    for (unsigned i = 0; i < exports->valueCount; ++i) {
+    for (unsigned i = 0; exports->values && i < exports->values->header.count; ++i) {
         struct ObjectExportInformation* exportInfo = refMalloc(_gObjectExportInformationType);
-        struct NamedExport* namedExport = (struct NamedExport*)&exports->valueExports[i];
+        struct NamedExport* namedExport = (struct NamedExport*)&exports->values->data[i];
 
         exportInfo->objectRef = refRetain(namedExport->exportValue);
         exportInfo->moduleName = refRetain(moduleName);

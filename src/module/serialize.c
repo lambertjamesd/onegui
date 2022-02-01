@@ -81,7 +81,7 @@ struct SerializedObjectInfo* _oneGuiInsertType(struct SerializerState* state, st
     }
 
     typeInfo->objectRef = refRetain(type);
-    typeInfo->name = optName;
+    typeInfo->name = refRetain(optName);
 
     switch (type->type) {
         case DataTypePointer:
@@ -110,38 +110,13 @@ struct SerializedObjectInfo* _oneGuiInsertType(struct SerializerState* state, st
     return typeInfo;
 }
 
-struct SerializedObjectInfo* _oneGuiInsertData(struct SerializerState* state, struct SerializedChunkState* chunkState, OString optName, void* ref, struct DataType* type) {
-    struct SerializedObjectInfo* result;
-    struct RangedBinaryTreeNode* treeNode;
+struct SerializedObjectInfo* _oneGuiAddReference(struct SerializerState* state, struct SerializedChunkState* chunkState, OString optName, void* ref, struct DataType* type);
 
-    if (rangedBinaryTreeGet(chunkState->objectToObjectInfo, (uint64_t)ref, &treeNode)) {
-        return treeNode->value;
-    }
-
-    result = refMalloc(_gSerializedObjectInfoType);
-    result->objectRef = refRetain(ref);
-    result->moduleName = NULL;
-    result->name = optName;
-    result->serializedIndex = ~0;
-    result->flags = 0;
-    rangedBinaryTreeInsert(chunkState->objectToObjectInfo, (uint64_t)ref, (uint32_t)refSize(ref), result);
-    refRelease(result);
-
-    _oneGuiInsertType(state, chunkState, NULL, type);
-
-    if (rangedBinaryTreeGet(state->addressToObjectInfo, (uint64_t)ref, &treeNode)) {
-        struct ObjectExportInformation* exportInfo = treeNode->value;
-        result->moduleName = exportInfo->moduleName;
-        result->name = exportInfo->name;
-    }
-
-    if (!(type->flags & (DataTypeFlagsHasStrongRef))) {
-        return result;
-    }
-
+void _oneGuiTraverseType(struct SerializerState* state, struct SerializedChunkState* chunkState, void* ref, struct DataType* type) {
     switch (type->type) {
+        case DataTypeString:
         case DataTypePointer:
-            _oneGuiInsertData(state, chunkState, NULL, *((void**)ref), ((struct PointerDataType*)type)->subType);
+            _oneGuiAddReference(state, chunkState, NULL, *((void**)ref), ((struct PointerDataType*)type)->subType);
             break;
         case DataTypeFixedArray:
         {
@@ -151,7 +126,7 @@ struct SerializedObjectInfo* _oneGuiInsertData(struct SerializerState* state, st
             char* curr = ref;
 
             for (unsigned i = 0; i < arrayType->elementCount; ++i) {
-                _oneGuiInsertData(state, chunkState, NULL, curr, arrayType->subType);
+                _oneGuiTraverseType(state, chunkState, curr, arrayType->subType);
                 curr += elementSize;
             }
 
@@ -167,7 +142,7 @@ struct SerializedObjectInfo* _oneGuiInsertData(struct SerializerState* state, st
             char* curr = dynamicArray->data;
 
             for (unsigned i = 0; i < dynamicArray->header.count; ++i) {
-                _oneGuiInsertData(state, chunkState, NULL, curr, arrayType->subType);
+                _oneGuiTraverseType(state, chunkState, curr, arrayType->subType);
                 curr += elementSize;
             }
 
@@ -181,13 +156,52 @@ struct SerializedObjectInfo* _oneGuiInsertData(struct SerializerState* state, st
                 struct ObjectSubType* subType = &objectDataType->objectSubTypes->elements[i];
 
                 if (subType->type->flags & DataTypeFlagsHasStrongRef) {
-                    _oneGuiInsertData(state, chunkState, NULL, (char*)ref + subType->offset, subType->type);
+                    _oneGuiTraverseType(state, chunkState, (char*)ref + subType->offset, subType->type);
                 }
             }
 
             break;
         }
     }
+}
+
+struct SerializedObjectInfo* _oneGuiAddReference(struct SerializerState* state, struct SerializedChunkState* chunkState, OString optName, void* ref, struct DataType* type) {
+    if (!ref) {
+        return NULL;
+    }
+
+    struct SerializedObjectInfo* result;
+    struct RangedBinaryTreeNode* treeNode;
+
+    if (rangedBinaryTreeGet(chunkState->objectToObjectInfo, (uint64_t)ref, &treeNode)) {
+        return treeNode->value;
+    }
+
+    result = refMalloc(_gSerializedObjectInfoType);
+    result->objectRef = refRetain(ref);
+    result->moduleName = NULL;
+    result->name = NULL;
+    result->serializedIndex = ~0;
+    result->flags = 0;
+    rangedBinaryTreeInsert(chunkState->objectToObjectInfo, (uint64_t)ref, (uint32_t)refSize(ref), result);
+    refRelease(result);
+
+    _oneGuiInsertType(state, chunkState, NULL, type);
+
+    if (rangedBinaryTreeGet(state->addressToObjectInfo, (uint64_t)ref, &treeNode)) {
+        struct ObjectExportInformation* exportInfo = treeNode->value;
+        result->moduleName = refRetain(exportInfo->moduleName);
+        result->name = refRetain(exportInfo->name);
+        return result;
+    }
+
+    result->name = refRetain(optName);
+
+    if (!(type->flags & (DataTypeFlagsHasStrongRef))) {
+        return result;
+    }
+
+    _oneGuiTraverseType(state, chunkState, ref, type);
 
     return result;
 }
@@ -343,10 +357,6 @@ void _oneGuiGenerateTypes(struct SerializedChunkState* chunkState, struct OGFile
     free(entries);
 }
 
-void _oneGuiSerializeWriteStrongRef(struct SerializedChunkState* chunkState, void* ref, struct OGFile* output) {
-
-}
-
 void _oneGuiWriteDataWithType(struct SerializedChunkState* chunkState, void* ref, struct DataType* dataType, struct OGFile* output);
 
 void _oneGuiWriteObject(struct SerializedChunkState* chunkState, void* ref, struct ObjectDataType* type, struct OGFile* output) {
@@ -385,7 +395,8 @@ void _oneGuiWriteDataWithType(struct SerializedChunkState* chunkState, void* ref
         {
             struct RangedBinaryTreeNode* treeNode;
             uint32_t strongRefIndex = 0;
-            if (rangedBinaryTreeGet(chunkState->objectToObjectInfo, (uint64_t)(*((void**)ref)), &treeNode)) {
+            void* pointerValue = *((void**)ref);
+            if (pointerValue && rangedBinaryTreeGet(chunkState->objectToObjectInfo, (uint64_t)pointerValue, &treeNode)) {
                 strongRefIndex = ((struct SerializedObjectInfo*)treeNode->value)->serializedIndex;
             }
             ogFileWrite(output, &strongRefIndex, sizeof(uint32_t));
@@ -484,6 +495,7 @@ void _oneGuiGenerateData(struct SerializedChunkState* chunkState, struct OGFile*
 }
 
 void _oneGuiSerializeWithState(struct SerializerState* state, struct SerializedChunkState* chunkState, struct ModuleExports* exports, struct OGFile* output) {
+    // TODO move header information to the module writer
     uint32_t header = ONEGUI_DATA_HEADER;
     ogFileWrite(output, &header, sizeof(uint32_t));
     uint64_t len = 0;
@@ -502,7 +514,7 @@ void _oneGuiSerializeWithState(struct SerializerState* state, struct SerializedC
 
     // mark data exports
     for (uint32_t i = 0; i < exports->valueCount; ++i) {
-        struct SerializedObjectInfo* objectInfo = _oneGuiInsertData(state, chunkState, exports->valueExports[i].name, exports->valueExports[i].exportValue, refGetDataType(exports->valueExports[i].exportValue));
+        struct SerializedObjectInfo* objectInfo = _oneGuiAddReference(state, chunkState, exports->valueExports[i].name, exports->valueExports[i].exportValue, refGetDataType(exports->valueExports[i].exportValue));
         objectInfo->serializedIndex = i;
     }
 
@@ -519,7 +531,7 @@ void _oneGuiSerializeWithState(struct SerializerState* state, struct SerializedC
 void oneGuiSerializeWithState(struct SerializerState* state, struct ModuleExports* exports, struct OGFile* output) {
     struct SerializedChunkState chunkState;
     chunkState.objectToObjectInfo = rangedBinaryTreeNew();
-    chunkState.typeToObjectInfo = hashTableNew(hashTableBasicEquality, hashTableIntegerHash, 0);
+    chunkState.typeToObjectInfo = hashTableNew(hashTableBasicEquality, hashTableIntegerHash, HashTableFlagsRetainKey | HashTableFlagsRetainValue);
 
     _oneGuiSerializeWithState(state, &chunkState, exports, output);
 

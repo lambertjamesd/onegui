@@ -25,7 +25,8 @@ int gWenceMapping[] = {
 };
 
 int64_t ogFileNativeSeek(void* file, int64_t offset, enum SeekType seekType) {
-    return fseek(file, offset, gWenceMapping[seekType]);
+    fseek(file, offset, gWenceMapping[seekType]);
+    return ftell(file);
 }
 
 void ogFileNativeClose(void* file) {

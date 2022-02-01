@@ -1,5 +1,6 @@
 #include "exports.h"
 #include "../types/type_builder.h"
+#include <assert.h>
 
 struct DataType* _gSerializerStateType;
 struct DataType* _gObjectExportInformationType;
@@ -33,13 +34,13 @@ void oneGuiExportsInit() {
 void oneGuiExportsAppend(OString moduleName, struct ModuleExports* exports) {
     for (unsigned i = 0; i < exports->typeCount; ++i) {
         struct ObjectExportInformation* exportInfo = refMalloc(_gObjectExportInformationType);
-        struct NamedExport* namedExport = (struct NamedExport*)&exports->typeExports[i];
+        struct NamedExport* namedExport = &exports->typeExports[i];
 
         exportInfo->objectRef = refRetain(namedExport->exportValue);
         exportInfo->moduleName = refRetain(moduleName);
         exportInfo->name = refRetain(namedExport->name);
         
-        rangedBinaryTreeInsert(gSerializerState->addressToObjectInfo, (uint64_t)namedExport, refSize(namedExport->exportValue), exportInfo);
+        rangedBinaryTreeInsert(gSerializerState->addressToObjectInfo, (uint64_t)namedExport->exportValue, refSize(namedExport->exportValue), exportInfo);
         refRelease(exportInfo);
     }
 

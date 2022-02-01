@@ -2,6 +2,7 @@
 #include "ranged_binary_tree.h"
 #include "../types/type_builder.h"
 #include "../ref/ref.h"
+#include <assert.h>
 
 struct DataType* _gRangeBinaryTreeType;
 struct DataType* _gRangeBinaryTreeNodeType;
@@ -39,13 +40,17 @@ int rangeBinaryTreeNodeHeight(struct RangedBinaryTreeNode* node) {
 }
 
 void rangeBinaryTreeNodeRecalcHeight(struct RangedBinaryTreeNode* node) {
+    if (!node) {
+        return;
+    }
+
     int left = rangeBinaryTreeNodeHeight(node->left);
     int right = rangeBinaryTreeNodeHeight(node->right);
 
     if (left > right) {
-        node->height = left;
+        node->height = left + 1;
     } else {
-        node->height = right;
+        node->height = right + 1;
     }
 }
 
@@ -55,6 +60,7 @@ struct RangedBinaryTreeNode* rangedBinaryTreeRotateRight(struct RangedBinaryTree
     node->left = newRoot->right;
     newRoot->right = node;
 
+    rangeBinaryTreeNodeRecalcHeight(newRoot->left);
     rangeBinaryTreeNodeRecalcHeight(newRoot->right);
     rangeBinaryTreeNodeRecalcHeight(newRoot);
     
@@ -68,6 +74,7 @@ struct RangedBinaryTreeNode* rangedBinaryTreeRotateLeft(struct RangedBinaryTreeN
     newRoot->left = node;
 
     rangeBinaryTreeNodeRecalcHeight(newRoot->left);
+    rangeBinaryTreeNodeRecalcHeight(newRoot->right);
     rangeBinaryTreeNodeRecalcHeight(newRoot);
     
     return newRoot;

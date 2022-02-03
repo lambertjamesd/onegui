@@ -11,6 +11,7 @@
 #define OSTR_NEW_FROM_CSTR(cstr) refMallocString(typeBuilderGetStringType(), strlen(cstr), cstr)
 
 OString ostrNewFromCStr(const char* cstr);
+OString ostrNewFromLen(uint32_t len);
 const char* ostrToCStr(ConstOString input, int* output);
 int ostrLen(ConstOString ostr);
 bool ostrEqual(ConstOString a, ConstOString b);

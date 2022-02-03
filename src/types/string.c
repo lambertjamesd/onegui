@@ -4,6 +4,10 @@ OString ostrNewFromCStr(const char* cstr) {
     return refMallocString(typeBuilderGetStringType(), strlen(cstr), cstr);
 }
 
+OString ostrNewFromLen(uint32_t len) {
+    return refMallocString(typeBuilderGetStringType(), len, NULL);
+}
+
 const char* ostrToCStr(ConstOString input, int* output) {
     if (!input) {
         *output = 0;

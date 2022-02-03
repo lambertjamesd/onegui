@@ -4,7 +4,7 @@
 #include <malloc.h>
 #include "../types/type_builder.h"
 #include "../types/string.h"
-
+#include "../error/error.h"
 
 struct DataType* _gSerializedObjectInfoType;
 
@@ -265,9 +265,8 @@ void _oneGuiSerializeWriteTypeRef(struct SerializedChunkState* chunkState, struc
     ogFileWrite(output, &refIndex, sizeof(uint32_t));
 }
 
-void _oneGuiSerializeType(struct SerializedChunkState* chunkState, struct SerializedObjectInfo* info, struct OGFile* output) {
-    _oneGuiWriteString(info->name, output);
-    struct DataType* type = (struct DataType*)info->objectRef;
+void _oneGuiSerializeType(struct SerializedChunkState* chunkState, void* ref, struct OGFile* output) {
+    struct DataType* type = (struct DataType*)ref;
 
     ogFileWrite(output, &type->type, sizeof(uint16_t));
     ogFileWrite(output, &type->flags, sizeof(uint16_t));
@@ -308,7 +307,7 @@ void _oneGuiSerializeType(struct SerializedChunkState* chunkState, struct Serial
     }
 }
 
-typedef void (*EntryWriter)(struct SerializedChunkState* chunkState, struct SerializedObjectInfo* info, struct OGFile* output);
+typedef void (*EntryWriter)(struct SerializedChunkState* chunkState, void* ref, struct OGFile* output);
 
 void _oneGuiGenerateEntries(struct SerializedObjectInfo** entries, uint32_t count, struct SerializedChunkState* chunkState, EntryWriter entryWriter, struct OGFile* output) {
     for (uint32_t i = 0; i < count; ++i) {
@@ -331,7 +330,22 @@ void _oneGuiGenerateEntries(struct SerializedObjectInfo** entries, uint32_t coun
     }
 
     for (uint32_t i = importCount; i < count; ++i) {
-        entryWriter(chunkState, entries[i], output);
+        uint32_t len = 0;
+
+        // each chunk of serialized data gets
+        // a length header so deserializers can
+        // quickly skip over entries
+        ogFileWrite(output, &len, sizeof(uint32_t));
+
+        uint64_t dataStart = ogFileSeek(output, 0, SeekTypeCurr);
+        
+        _oneGuiWriteString(entries[i]->name, output);
+
+        entryWriter(chunkState, entries[i]->objectRef, output);
+
+        len = (uint32_t)(ogFileSeek(output, 0, SeekTypeCurr));
+        ogFileSeek(output, dataStart - sizeof(uint32_t), SeekTypeSet);
+        ogFileWrite(output, &len, sizeof(uint32_t));
     }
 }
 
@@ -396,8 +410,12 @@ void _oneGuiWriteDataWithType(struct SerializedChunkState* chunkState, void* ref
             struct RangedBinaryTreeNode* treeNode;
             uint32_t strongRefIndex = 0;
             void* pointerValue = *((void**)ref);
-            if (pointerValue && rangedBinaryTreeGet(chunkState->objectToObjectInfo, (uint64_t)pointerValue, &treeNode)) {
-                strongRefIndex = ((struct SerializedObjectInfo*)treeNode->value)->serializedIndex;
+            if (pointerValue) {
+                if (rangedBinaryTreeGet(chunkState->objectToObjectInfo, (uint64_t)pointerValue, &treeNode)) {
+                    strongRefIndex = ((struct SerializedObjectInfo*)treeNode->value)->serializedIndex;
+                } else {
+                    ogReportError("Could not find serialization index for strong ref");
+                }
             }
             ogFileWrite(output, &strongRefIndex, sizeof(uint32_t));
             break;
@@ -407,9 +425,14 @@ void _oneGuiWriteDataWithType(struct SerializedChunkState* chunkState, void* ref
             struct RangedBinaryTreeNode* treeNode;
             uint32_t strongRefIndex = 0;
             uint32_t weakRefOffset = 0;
-            if (rangedBinaryTreeGet(chunkState->objectToObjectInfo, (uint64_t)(*((void**)ref)), &treeNode)) {
-                strongRefIndex = ((struct SerializedObjectInfo*)treeNode->value)->serializedIndex;
-                weakRefOffset = (uint32_t)((uint64_t)ref - treeNode->min);
+            void* pointerValue = *((void**)ref);
+            if (pointerValue) {
+                if (rangedBinaryTreeGet(chunkState->objectToObjectInfo, (uint64_t)pointerValue, &treeNode)) {
+                    strongRefIndex = ((struct SerializedObjectInfo*)treeNode->value)->serializedIndex;
+                    weakRefOffset = (uint32_t)((uint64_t)pointerValue - treeNode->min);
+                } else {
+                    ogReportError("Could not find serialization index for weak ref");
+                }
             }
             ogFileWrite(output, &strongRefIndex, sizeof(uint32_t));
             ogFileWrite(output, &weakRefOffset, sizeof(uint32_t));
@@ -453,23 +476,22 @@ void _oneGuiWriteDataWithType(struct SerializedChunkState* chunkState, void* ref
     }
 }
 
-void _oneGuiSerializeData(struct SerializedChunkState* chunkState, struct SerializedObjectInfo* info, struct OGFile* output) {
-    struct DataType* dataType = refGetDataType(info->objectRef);
+void _oneGuiSerializeData(struct SerializedChunkState* chunkState, void* ref, struct OGFile* output) {
+    struct DataType* dataType = refGetDataType(ref);
 
-    _oneGuiSerializeWriteTypeRef(chunkState, refGetDataType(info->objectRef), output);
+    _oneGuiSerializeWriteTypeRef(chunkState, refGetDataType(ref), output);
 
     if (!(dataType->flags & (DataTypeFlagsHasStrongRef | DataTypeFlagsHasWeakRef))) {
         if (dataType->type == DataTypeDynamicArray) {
             struct DynamicArrayDataType* typeAsArray = (struct DynamicArrayDataType*)dataType;
-            struct DynamicArrayHeader* dataAsArray = (struct DynamicArrayHeader*)info->objectRef;
-            ogFileWrite(output, info->objectRef, sizeof(struct DynamicArrayHeader) + dataAsArray->count * dataTypeSize(typeAsArray->subType));
+            struct DynamicArrayHeader* dataAsArray = (struct DynamicArrayHeader*)ref;
+            ogFileWrite(output, ref, sizeof(struct DynamicArrayHeader) + dataAsArray->count * dataTypeSize(typeAsArray->subType));
         } else {
-            ogFileWrite(output, info->objectRef, dataTypeSize(dataType));
+            ogFileWrite(output, ref, dataTypeSize(dataType));
         }
-        return;
+    } else {
+        _oneGuiWriteDataWithType(chunkState, ref, dataType, output);
     }
-
-    _oneGuiWriteDataWithType(chunkState, info->objectRef, dataType, output);
 }
 
 void _oneGuiGenerateData(struct SerializedChunkState* chunkState, struct OGFile* output) {
@@ -495,13 +517,13 @@ void _oneGuiGenerateData(struct SerializedChunkState* chunkState, struct OGFile*
 }
 
 void _oneGuiSerializeWithState(struct SerializerState* state, struct SerializedChunkState* chunkState, struct ModuleExports* exports, struct OGFile* output) {
-    // TODO move header information to the module writer
-    uint32_t header = ONEGUI_DATA_HEADER;
-    ogFileWrite(output, &header, sizeof(uint32_t));
-    uint64_t len = 0;
-    // come back and update this later
-    ogFileWrite(output, &len, sizeof(uint64_t));
-    uint64_t dataStart = ogFileSeek(output, 0, SeekTypeCurr);
+    // // TODO move header information to the module writer
+    // uint32_t header = ONEGUI_DATA_HEADER;
+    // ogFileWrite(output, &header, sizeof(uint32_t));
+    // uint64_t len = 0;
+    // // come back and update this later
+    // ogFileWrite(output, &len, sizeof(uint64_t));
+    // uint64_t dataStart = ogFileSeek(output, 0, SeekTypeCurr);
 
     uint16_t version = 0;
     ogFileWrite(output, &version, sizeof(uint16_t));
@@ -533,10 +555,10 @@ void _oneGuiSerializeWithState(struct SerializerState* state, struct SerializedC
 
     _oneGuiGenerateData(chunkState, output);
 
-    len = ogFileSeek(output, 0, SeekTypeCurr) - dataStart;
-    ogFileSeek(output, dataStart - sizeof(uint64_t), SeekTypeSet);
-    // write the correct file length
-    ogFileWrite(output, &len, sizeof(uint64_t));
+    // len = ogFileSeek(output, 0, SeekTypeCurr) - dataStart;
+    // ogFileSeek(output, dataStart - sizeof(uint64_t), SeekTypeSet);
+    // // write the correct file length
+    // ogFileWrite(output, &len, sizeof(uint64_t));
 }
 
 void oneGuiSerializeWithState(struct SerializerState* state, struct ModuleExports* exports, struct OGFile* output) {

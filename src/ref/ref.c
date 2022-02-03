@@ -116,7 +116,10 @@ OString refMallocString(struct StringDataType* dataType, unsigned byteLength, co
         ++lengthIndex;
     }
 
-    memcpy(result + prefixLength, dataSource, byteLength);
+    if (dataSource) {
+        memcpy(result + prefixLength, dataSource, byteLength);
+    }
+    
     return result;
 }
 

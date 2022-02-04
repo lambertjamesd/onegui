@@ -14,6 +14,7 @@ struct DynamicArrayDataType* typeBuilderNewVariableArray(struct DataType* elemen
 struct DataType* typeBuilderNewFixedArray(struct DataType* elementType, unsigned size);
 struct DataType* typeBuilderGetPointerToUnknown();
 struct DataType* typeBuilderGetWeakPointerToUnknown();
+struct DataType* typeBuilderGetUnknown();
 struct StringDataType* typeBuilderGetStringType();
 
 struct BasicDataTypes* typeBuilderBasicTypes();

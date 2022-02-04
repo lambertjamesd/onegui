@@ -12,11 +12,11 @@ struct SerializerState* gSerializerState;
 void oneGuiExportsInit() {
     _gSerializerStateType = typeBuilderNewObject(sizeof(struct SerializerState), 2);
     TYPE_BUILDER_APPEND_SUB_TYPE(_gSerializerStateType, struct SerializerState, addressToObjectInfo, typeBuilderGetPointerToUnknown());
-    TYPE_BUILDER_APPEND_SUB_TYPE(_gSerializerStateType, struct SerializerState, objectNameToObject, typeBuilderGetPointerToUnknown());
+    TYPE_BUILDER_APPEND_SUB_TYPE(_gSerializerStateType, struct SerializerState, modules, typeBuilderGetPointerToUnknown());
 
     gSerializerState = refMalloc(_gSerializerStateType);
     gSerializerState->addressToObjectInfo = rangedBinaryTreeNew();
-    gSerializerState->objectNameToObject = hashTableNew(hashTableBasicEquality, hashTableIntegerHash, HashTableFlagsRetainKey | HashTableFlagsRetainValue);
+    gSerializerState->modules = hashTableNew(hashTableBasicEquality, hashTableIntegerHash, HashTableFlagsRetainKey | HashTableFlagsRetainValue);
 
     _gObjectExportInformationType = typeBuilderNewObject(sizeof(struct ObjectExportInformation), 3);
     TYPE_BUILDER_APPEND_SUB_TYPE(_gObjectExportInformationType, struct ObjectExportInformation, objectRef, typeBuilderGetPointerToUnknown());
@@ -64,6 +64,11 @@ void oneGuiExportsAppend(OString moduleName, struct ModuleExports* exports) {
         rangedBinaryTreeInsert(gSerializerState->addressToObjectInfo, (uint64_t)namedExport, refSize(namedExport->exportValue), exportInfo);
         refRelease(exportInfo);
     }
+}
+
+
+struct NamedExportArray* namedExportArrayNew(int capacity) {
+    return (struct NamedExportArray*)refMallocArray(gNamedExportArrayType, capacity);
 }
 
 void namedExportAppend(struct NamedExportArray* array, OString name, void* exportValue) {

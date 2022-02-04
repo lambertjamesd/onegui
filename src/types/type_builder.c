@@ -50,6 +50,10 @@ struct DataType* typeBuilderGetWeakPointerToUnknown() {
     return _gUnknownWeakPointer;
 }
 
+struct DataType* typeBuilderGetUnknown() {
+    return _gBasicDataTypes.unknownType;
+}
+
 struct StringDataType* typeBuilderGetStringType() {
     return _gBasicDataTypes.stringDataType;
 }

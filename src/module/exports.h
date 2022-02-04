@@ -5,6 +5,7 @@
 
 #include "../data_structures/hash_table.h"
 #include "../data_structures/ranged_binary_tree.h"
+#include "module.h"
 
 struct ObjectExportInformation {
     void* objectRef;
@@ -14,7 +15,7 @@ struct ObjectExportInformation {
 
 struct SerializerState {
     struct RangedBinaryTree* addressToObjectInfo;
-    struct HashTable* objectNameToObject;
+    struct HashTable* modules;
 };
 
 struct NamedExport {
@@ -40,6 +41,7 @@ void oneGuiExportsInit();
 
 void oneGuiExportsAppend(OString moduleName, struct ModuleExports* exports);
 
+struct NamedExportArray* namedExportArrayNew(int capacity);
 void namedExportAppend(struct NamedExportArray* array, OString name, void* exportValue);
 
 #endif

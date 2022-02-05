@@ -7,7 +7,7 @@
 #include "../data_structures/ranged_binary_tree.h"
 #include "module.h"
 
-struct ObjectExportInformation {
+struct OGExportInfo {
     void* objectRef;
     OString moduleName;
     OString name;
@@ -18,30 +18,19 @@ struct SerializerState {
     struct HashTable* modules;
 };
 
-struct NamedExport {
-    OString name;
-    void* exportValue;
-};
-
-struct NamedExportArray {
-    struct DynamicArrayHeader header;
-    struct NamedExport data[];
-};
-
-struct ModuleExports {
-    struct NamedExportArray* types;
-    struct NamedExportArray* values;
-};
-
 extern struct SerializerState* gSerializerState;
 extern struct DynamicArrayDataType* gNamedExportArrayType;
 extern struct DataType* gModuleExportsType;
 
 void oneGuiExportsInit();
 
-void oneGuiExportsAppend(OString moduleName, struct ModuleExports* exports);
+void ogExportsAddModule(struct OGModule* module);
+
+struct ModuleExports* moduleExportsNew(struct NamedExportArray* types, struct NamedExportArray* values);
 
 struct NamedExportArray* namedExportArrayNew(int capacity);
 void namedExportAppend(struct NamedExportArray* array, OString name, void* exportValue);
+
+struct NamedExportArray* namedExportsFilterUnamed(struct NamedExportArray* array);
 
 #endif

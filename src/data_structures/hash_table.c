@@ -149,6 +149,11 @@ void _hashTableSetNewSize(struct HashTable* table, int newEntryCount, int newBin
     table->binArray->header.count = table->binArray->header.capacity;
     table->entryCount = 0;
 
+    for (unsigned i = 0; i + 1 < table->entryArray->header.count; ++i) {
+        table->entryArray->table[i].next = &table->entryArray->table[i + 1];
+    }
+    table->firstFreeEntry = &table->entryArray->table[0];
+
     // read all elements
     for (unsigned i = 0; i < prevBinArray->header.count; ++i) {
         struct HashEntry* curr = prevBinArray->table[i];

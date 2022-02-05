@@ -330,6 +330,39 @@ bool _oneGuiReadStrongRef(struct OGDeserializeState* deserializeState, struct OG
     return true;
 }
 
+bool _oneGuiFillDataWithType(struct SerializerState* state, struct OGDeserializeState* deserializeState, struct OGFile* input, void* ref, struct DataType* type);
+
+bool _oneGuiFillObjectWithType(struct SerializerState* state, struct OGDeserializeState* deserializeState, struct OGFile* input, void* ref, struct ObjectDataType* type) {
+    char* start = ref;
+    unsigned lastRead = 0;
+
+    for (uint32_t i = 0; i < type->objectSubTypes->header.count; ++i) {
+        struct ObjectSubType* subType = &type->objectSubTypes->elements[i];
+        if (subType->type->flags & (DataTypeFlagsHasStrongRef | DataTypeFlagsHasWeakRef)) {
+            unsigned toRead = subType->offset - lastRead;
+
+            if (toRead) {
+                ogFileRead(input, start + lastRead, subType->offset - lastRead);
+                lastRead = subType->offset;
+            }
+
+            if (!_oneGuiFillDataWithType(state, deserializeState, input, start + subType->offset, subType->type)) {
+                return false;
+            }
+            
+            lastRead += dataTypeSize(subType->type);
+        }
+    }
+
+    unsigned objectSize = dataTypeSize((struct DataType*)type);
+
+    if (lastRead < objectSize) {
+        ogFileRead(input, start + lastRead, objectSize - lastRead);
+    }
+
+    return true;
+}
+
 bool _oneGuiFillDataWithType(struct SerializerState* state, struct OGDeserializeState* deserializeState, struct OGFile* input, void* ref, struct DataType* type) {
     switch (type->type) {
         case DataTypeString:
@@ -345,6 +378,57 @@ bool _oneGuiFillDataWithType(struct SerializerState* state, struct OGDeserialize
             *((void**)ref) = refRetain(pointTo);
             break;
         }
+        case DataTypeWeakPointer:
+        {
+            void* pointTo;
+            if (!_oneGuiReadStrongRef(deserializeState, input, &pointTo)) {
+                return false;
+            }
+            uint32_t offset;
+            ogFileRead(input, &offset, sizeof(uint32_t));
+
+            *((void**)ref) = (char*)pointTo + offset;
+            break;
+        }
+        case DataTypeFixedArray:
+        {
+            struct FixedArrayDataType* typeAsArray = (struct FixedArrayDataType*)type;
+
+            // skip header
+            ogFileSeek(input, sizeof(struct DynamicArrayHeader), SeekTypeCurr);
+
+            char* curr = ref;
+            uint32_t elementSize = dataTypeSize(typeAsArray->subType);
+
+            for (uint32_t i = 0; i < typeAsArray->elementCount; ++i) {
+                if (!_oneGuiFillDataWithType(state, deserializeState, input, curr, typeAsArray->subType)) {
+                    return false;
+                }
+                curr += elementSize;
+            }
+            break;
+        }
+        case DataTypeDynamicArray:
+        {
+            struct DynamicArrayDataType* typeAsArray = (struct DynamicArrayDataType*)type;
+            struct DynamicArray* dataAsArray = (struct DynamicArray*)ref;
+
+            // skip header
+            ogFileSeek(input, sizeof(struct DynamicArrayHeader), SeekTypeCurr);
+
+            char* curr = &dataAsArray->data[0];
+            uint32_t elementSize = dataTypeSize(typeAsArray->subType);
+
+            for (uint32_t i = 0; i < dataAsArray->header.count; ++i) {
+                if (!_oneGuiFillDataWithType(state, deserializeState, input, curr, typeAsArray->subType)) {
+                    return false;
+                }
+                curr += elementSize;
+            }
+            break;
+        }
+        case DataTypeObject:
+            return _oneGuiFillObjectWithType(state, deserializeState, input, ref, (struct ObjectDataType*)type);
         default: 
             return false;
     }
@@ -360,6 +444,18 @@ bool _oneGuiFillData(struct SerializerState* state, struct OGDeserializeState* d
 
     void* ref = &deserializeState->values->data[index];
     struct DataType* type = refGetDataType(ref);
+    
+    if (!(type->flags & (DataTypeFlagsHasStrongRef | DataTypeFlagsHasWeakRef))) {
+        if (type->type == DataTypeDynamicArray) {
+            struct DynamicArrayDataType* typeAsArray = (struct DynamicArrayDataType*)type;
+            struct DynamicArray* dataAsArray = (struct DynamicArray*)ref;
+            ogFileRead(input, ref, sizeof(struct DynamicArrayHeader) + dataTypeSize(typeAsArray->subType) * dataAsArray->header.count);
+        } else {
+            ogFileRead(input, ref, dataTypeSize(type));
+        }
+
+        return true;
+    }
 
     return _oneGuiFillDataWithType(state, deserializeState, input, ref, type);
 }
@@ -402,8 +498,20 @@ bool oneGuiDeserializeWithState(struct SerializerState* state, struct OGFile* in
     }
 
     if (!_oneGuiReadData(state, &deserializeState, input)) {
+        refRelease(deserializeState.types);
         return false;
     }
+
+    struct NamedExportArray* types = namedExportsFilterUnamed(deserializeState.types);
+    struct NamedExportArray* values = namedExportsFilterUnamed(deserializeState.values);
+
+    refRelease(deserializeState.types);
+    refRelease(deserializeState.values);
+
+    *output = moduleExportsNew(types, values);
+
+    refRelease(types);
+    refRelease(values);
 
     return true;
 }

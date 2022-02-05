@@ -73,7 +73,7 @@ struct SerializedObjectInfo* _oneGuiInsertType(struct SerializerState* state, st
     struct RangedBinaryTreeNode* namedType;
     // check to see if the object type is exported from another module
     if (rangedBinaryTreeGet(state->addressToObjectInfo, (uint64_t)type, &namedType)) {
-        struct ObjectExportInformation* exportInfo = (struct ObjectExportInformation*)namedType->value;
+        struct OGExportInfo* exportInfo = (struct OGExportInfo*)namedType->value;
         typeInfo->objectRef = refRetain(exportInfo->objectRef);
         typeInfo->moduleName = refRetain(exportInfo->moduleName);
         typeInfo->name = refRetain(exportInfo->name);
@@ -189,7 +189,7 @@ struct SerializedObjectInfo* _oneGuiAddReference(struct SerializerState* state, 
     _oneGuiInsertType(state, chunkState, NULL, type);
 
     if (rangedBinaryTreeGet(state->addressToObjectInfo, (uint64_t)ref, &treeNode)) {
-        struct ObjectExportInformation* exportInfo = treeNode->value;
+        struct OGExportInfo* exportInfo = treeNode->value;
         result->moduleName = refRetain(exportInfo->moduleName);
         result->name = refRetain(exportInfo->name);
         return result;

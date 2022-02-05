@@ -5,6 +5,9 @@
 #include "exports.h"
 #include "../types/type_builder.h"
 #include "../ref/basic_types.h"
+#include "../module/module.h"
+
+struct OGModule* gOGCoreModule;
 
 void coreModuleInit() {
     struct NamedExportArray* typeExports = (struct NamedExportArray*)refMallocArray(gNamedExportArrayType, 24);
@@ -37,7 +40,9 @@ void coreModuleInit() {
     moduleExports.types = typeExports;
     moduleExports.values = NULL;
 
-    oneGuiExportsAppend(OSTR_NEW_FROM_CSTR("core"), &moduleExports);
+    gOGCoreModule = ogModuleNew(OSTR_NEW_FROM_CSTR("core"));
+    ogModuleAppendExports(gOGCoreModule, &moduleExports);
+    ogExportsAddModule(gOGCoreModule);
 
     refRelease(typeExports);
 }

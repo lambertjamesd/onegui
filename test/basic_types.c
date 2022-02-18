@@ -66,7 +66,7 @@ void testBasicTypes() {
 
     TEST_ASSERT(refGetDataType(basicTypes.pointerDataType) == (struct DataType*)basicTypes.objectDataType);
     TEST_ASSERT(basicTypes.pointerDataType->type == DataTypeObject);
-    TEST_ASSERT(basicTypes.pointerDataType->byteSize == 16);
+    TEST_ASSERT(basicTypes.pointerDataType->byteSize == sizeof(struct PointerDataType));
     TEST_ASSERT(basicTypes.pointerDataType->objectSubTypes->header.count == 3);
     TEST_ASSERT(basicTypes.pointerDataType->objectSubTypes->elements[0].offset == 0);
     TEST_ASSERT(basicTypes.pointerDataType->objectSubTypes->elements[0].type == basicTypes.primitiveTypes[DataTypeUInt16]);

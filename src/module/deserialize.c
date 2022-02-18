@@ -8,7 +8,7 @@ struct OGDeserializeState {
 };
 
 bool  _oneGuiReadVarUint(struct OGFile* input, int nBits, uint64_t* output, int* nBytesOut) {
-    uint64_t result;
+    uint64_t result = 0;
     uint8_t curr;
 
     int currBits = 0;
